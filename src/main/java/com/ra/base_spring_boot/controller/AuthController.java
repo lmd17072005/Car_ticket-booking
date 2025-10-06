@@ -15,17 +15,15 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController
-{
+public class AuthController {
     private final IAuthService authService;
 
     /**
      * @param formLogin FormLogin
-     * @apiNote handle login with { username , password }
+     * @apiNote handle login with { email , password }
      */
     @PostMapping("/login")
-    public ResponseEntity<?> handleLogin(@Valid @RequestBody FormLogin formLogin)
-    {
+    public ResponseEntity<?> handleLogin(@Valid @RequestBody FormLogin formLogin) {
         return ResponseEntity.ok().body(
                 ResponseWrapper.builder()
                         .status(HttpStatus.OK)
@@ -37,13 +35,12 @@ public class AuthController
 
     /**
      * @param formRegister FormRegister
-     * @apiNote handle register with { fullName , username , password }
+     * @apiNote handle register with { firstName , lastName , email , password , phone }
      */
     @PostMapping("/register")
-    public ResponseEntity<?> handleRegister(@Valid @RequestBody FormRegister formRegister)
-    {
+    public ResponseEntity<?> handleRegister(@Valid @RequestBody FormRegister formRegister) {
         authService.register(formRegister);
-        return ResponseEntity.created(URI.create("api/v1/auth/register")).body(
+        return ResponseEntity.created(URI.create("/api/v1/auth/register")).body(
                 ResponseWrapper.builder()
                         .status(HttpStatus.CREATED)
                         .code(201)
@@ -51,5 +48,4 @@ public class AuthController
                         .build()
         );
     }
-
 }

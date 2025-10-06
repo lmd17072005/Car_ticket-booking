@@ -4,16 +4,16 @@ import com.ra.base_spring_boot.dto.req.FormLogin;
 import com.ra.base_spring_boot.dto.req.FormRegister;
 import com.ra.base_spring_boot.dto.resp.JwtResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
-import com.ra.base_spring_boot.model.Role;
-import com.ra.base_spring_boot.model.User;
 import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.model.constants.Status;
+import com.ra.base_spring_boot.model.user.Role;
+import com.ra.base_spring_boot.model.user.User;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.security.jwt.JwtProvider;
 import com.ra.base_spring_boot.security.principle.MyUserDetails;
 import com.ra.base_spring_boot.services.IAuthService;
 import com.ra.base_spring_boot.services.IRoleService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements IAuthService
-{
+public class AuthServiceImpl implements IAuthService {
+
     private final IRoleService roleService;
     private final IUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -37,42 +37,35 @@ public class AuthServiceImpl implements IAuthService
     private final JwtProvider jwtProvider;
 
     @Override
-    public void register(FormRegister formRegister)
-    {
+    public void register(FormRegister formRegister) {
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
         User user = User.builder()
-                .fullName(formRegister.getFullName())
-                .username(formRegister.getUsername())
+                .firstName(formRegister.getFirstName())
+                .lastName(formRegister.getLastName())
+                .email(formRegister.getEmail())
                 .password(passwordEncoder.encode(formRegister.getPassword()))
-                .status(true)
+                .phone(formRegister.getPhone())
+                .status(Status.ACTIVE)
                 .roles(roles)
                 .build();
         userRepository.save(user);
     }
 
     @Override
-    public JwtResponse login(FormLogin formLogin)
-    {
+    public JwtResponse login(FormLogin formLogin) {
         Authentication authentication;
-        try
-        {
-            authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(formLogin.getUsername(), formLogin.getPassword()));
-        }
-        catch (AuthenticationException e)
-        {
-            throw new HttpBadRequest("Username or password is incorrect");
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(formLogin.getEmail(), formLogin.getPassword()));
+        } catch (AuthenticationException e) {
+            throw new HttpBadRequest("Email or password is incorrect");
         }
 
         MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        if (!userDetails.getUser().getStatus())
-        {
-            throw new HttpBadRequest("your account is blocked");
+        if (userDetails.getUser().getStatus() != Status.ACTIVE) {
+            throw new HttpBadRequest("Your account is blocked");
         }
-
-
-
-
 
         return JwtResponse.builder()
                 .accessToken(jwtProvider.generateToken(userDetails.getUsername()))
@@ -80,6 +73,4 @@ public class AuthServiceImpl implements IAuthService
                 .roles(userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()))
                 .build();
     }
-
-
 }

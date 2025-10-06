@@ -1,8 +1,8 @@
 package com.ra.base_spring_boot.services.impl;
 
 import com.ra.base_spring_boot.exception.HttpNotFound;
-import com.ra.base_spring_boot.model.Role;
 import com.ra.base_spring_boot.model.constants.RoleName;
+import com.ra.base_spring_boot.model.user.Role;
 import com.ra.base_spring_boot.repository.IRoleRepository;
 import com.ra.base_spring_boot.services.IRoleService;
 import lombok.RequiredArgsConstructor;

@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.security.principle;
 
-import com.ra.base_spring_boot.model.User;
+import com.ra.base_spring_boot.model.constants.Status;
+import com.ra.base_spring_boot.model.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,56 +10,48 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 @Builder
-public class MyUserDetails implements UserDetails
-{
+public class MyUserDetails implements UserDetails {
+
     private User user;
     private Collection<? extends GrantedAuthority> authorities;
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities()
-    {
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return this.authorities;
     }
 
     @Override
-    public String getPassword()
-    {
+    public String getPassword() {
         return this.user.getPassword();
     }
 
     @Override
-    public String getUsername()
-    {
-        return this.user.getUsername();
+    public String getUsername() {
+        return this.user.getEmail();
     }
 
     @Override
-    public boolean isAccountNonExpired()
-    {
+    public boolean isAccountNonExpired() {
         return true;
     }
 
     @Override
-    public boolean isAccountNonLocked()
-    {
+    public boolean isAccountNonLocked() {
+        return this.user.getStatus() == Status.ACTIVE;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
         return true;
     }
 
     @Override
-    public boolean isCredentialsNonExpired()
-    {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled()
-    {
-        return true;
+    public boolean isEnabled() {
+        return this.user.getStatus() == Status.ACTIVE;
     }
 }

@@ -2,7 +2,7 @@ spring:
   application:
     name: base_spring_boot
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/base_core?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://127.0.0.1:3306/bussy?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
     password: 123456
   jooq:
