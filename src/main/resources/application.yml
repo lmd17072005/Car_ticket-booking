@@ -2,7 +2,7 @@ spring:
   application:
     name: base_spring_boot
   datasource:
-    url: jdbc:mysql://localhost:3307/base_core?createDatabaseIfNotExist=true
+    url: jdbc:mysql://127.0.0.1:3306/base_core?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
     password: 123456
   jooq:
@@ -23,4 +23,3 @@ jwt:
     key: Ascmkkqdnmsdfrtgsyuhidj21ue120938219321ndsad
   expired:
     access: 864000
-
