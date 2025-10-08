@@ -21,6 +21,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.ra.base_spring_boot.exception.HttpConflict;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -38,6 +39,10 @@ public class AuthServiceImpl implements IAuthService {
 
     @Override
     public void register(FormRegister formRegister) {
+        if (userRepository.findByEmail(formRegister.getEmail()).isPresent()) {
+            throw new HttpConflict("Email is already taken!");
+        }
+
         Set<Role> roles = new HashSet<>();
         roles.add(roleService.findByRoleName(RoleName.ROLE_USER));
         User user = User.builder()
@@ -63,14 +68,13 @@ public class AuthServiceImpl implements IAuthService {
         }
 
         MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        if (userDetails.getUser().getStatus() != Status.ACTIVE) {
-            throw new HttpBadRequest("Your account is blocked");
-        }
-
+        String token = jwtProvider.generateToken(userDetails);
         return JwtResponse.builder()
-                .accessToken(jwtProvider.generateToken(userDetails.getUsername()))
+                .accessToken(token)
                 .user(userDetails.getUser())
-                .roles(userDetails.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet()))
+                .roles(userDetails.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toSet()))
                 .build();
     }
 }

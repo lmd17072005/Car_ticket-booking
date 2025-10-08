@@ -2,9 +2,9 @@ spring:
   application:
     name: base_spring_boot
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/bussy?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://127.0.0.1:3306/TicketBooking?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root
-    password: 123456
+    password: Duc17072005@
   jooq:
     sql-dialect: org.hibernate.dialect.MySQL8Dialect
   jpa:
@@ -23,3 +23,6 @@ jwt:
     key: Ascmkkqdnmsdfrtgsyuhidj21ue120938219321ndsad
   expired:
     access: 864000
+
+server:
+      port: 8081
