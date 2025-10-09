@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.model.base.BaseObject;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.HashSet;
@@ -12,6 +13,7 @@ import java.util.Set;
 @Entity
 @Table(name = "roles")
 @Getter
+@NoArgsConstructor
 @Setter
 public class Role extends BaseObject {
 
@@ -21,4 +23,8 @@ public class Role extends BaseObject {
 
     @ManyToMany(mappedBy = "roles")
     private Set<User> users = new HashSet<>();
+
+    public Role(RoleName roleName) {
+        this.roleName = roleName;
+    }
 }
