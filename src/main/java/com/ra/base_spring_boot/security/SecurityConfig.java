@@ -22,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.http.HttpMethod;
 
 import java.util.List;
 
@@ -54,6 +55,9 @@ public class SecurityConfig
                 .authorizeHttpRequests(
                         url -> url
                                 .requestMatchers("/api/v1/auth/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/buses/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/routes/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/v1/schedules/**").permitAll()
                                 .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                                 .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
                                 .anyRequest().authenticated()
