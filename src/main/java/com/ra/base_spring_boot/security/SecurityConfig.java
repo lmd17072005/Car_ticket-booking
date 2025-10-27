@@ -44,7 +44,7 @@ public class SecurityConfig
                 .cors(cf -> cf.configurationSource(request ->
                 {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:5173")); // phụ thuộc vào port clents
+                    config.setAllowedOrigins(List.of("http://localhost:5173")); // Phụ thuộc vào port client
                     config.setAllowedMethods(List.of("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(List.of("*"));
@@ -54,12 +54,20 @@ public class SecurityConfig
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         url -> url
-                                .requestMatchers("/api/v1/auth/**").permitAll()
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                .requestMatchers(
+                                        "/api/v1/auth/**",
+                                        "/api/v1/banners/**"
+                                ).permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/buses/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/routes/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/schedules/**").permitAll()
                                 .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                                 .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers(HttpMethod.GET, "/api/v1/cancellation-policies/**").permitAll()
+                                .requestMatchers("api/v1/tickets").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers(HttpMethod.POST, "api/v1/cancellation-policies").hasAuthority(RoleName.ROLE_ADMIN.toString())
+                                .requestMatchers(HttpMethod.DELETE, "api/v1/cancellation-policies/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                                 .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -69,7 +77,7 @@ public class SecurityConfig
                                 .authenticationEntryPoint(jwtEntryPoint)
                                 .accessDeniedHandler(accessDenied)
                 )
-                .addFilterAfter(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 

@@ -26,3 +26,8 @@ jwt:
 
 server:
       port: 8081
+
+cloudinary:
+  cloud_name: dmnhhykeg
+  api_key: 414185256892539
+  api_secret: I04ZFI8sFODtDpoThybOQejd1uo

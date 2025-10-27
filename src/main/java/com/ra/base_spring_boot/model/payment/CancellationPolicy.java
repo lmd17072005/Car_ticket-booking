@@ -1,6 +1,7 @@
 package com.ra.base_spring_boot.model.payment;
 import com.ra.base_spring_boot.model.base.BaseObject;
 import jakarta.persistence.*;
+import com.ra.base_spring_boot.model.Bus.Ticket;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
