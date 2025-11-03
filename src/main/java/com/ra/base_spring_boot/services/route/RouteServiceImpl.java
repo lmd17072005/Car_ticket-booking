@@ -1,6 +1,5 @@
 package com.ra.base_spring_boot.services.route;
 
-
 import com.ra.base_spring_boot.dto.route.RouteRequest;
 import com.ra.base_spring_boot.dto.route.RouteResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
@@ -14,12 +13,12 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Service
 @RequiredArgsConstructor
 public class RouteServiceImpl implements IRouteService {
     private final IRouteRepository routeRepository;
     private final IStationRepository stationRepository;
+
 
     @Override
     public List<RouteResponse> findAll() {
@@ -28,57 +27,52 @@ public class RouteServiceImpl implements IRouteService {
 
     @Override
     public RouteResponse findById(Long id) {
-        Route route = routeRepository.findById(id).orElseThrow(() -> new HttpNotFound("Route not found with id: " + id));
+        Route route = routeRepository.findById(id).orElseThrow(() -> new HttpNotFound("Không tìm thấy tuyến đường với id: " + id));
         return new RouteResponse(route);
     }
 
     @Override
     public RouteResponse save(RouteRequest routeRequest) {
-        if (routeRequest.getDepartureStationId().equals(routeRequest.getArrivalStationId())) {
-            throw new HttpBadRequest("Departure and arrival stations must be different");
-        }
-
-        Station departureStation = stationRepository.findById(routeRequest.getDepartureStationId())
-                .orElseThrow(() -> new HttpNotFound("Departure station not found with id: " + routeRequest.getDepartureStationId()));
-        Station arrivalStation = stationRepository.findById(routeRequest.getArrivalStationId())
-                .orElseThrow(() -> new HttpNotFound("Arrival station not found with id: " + routeRequest.getArrivalStationId()));
-
-        Route newRoute = new Route();
-        newRoute.setDepartureStation(departureStation);
-        newRoute.setArrivalStation(arrivalStation);
-        newRoute.setPrice(routeRequest.getPrice());
-        newRoute.setDuration(routeRequest.getDuration());
-        newRoute.setDistance(routeRequest.getDistance());
+        Route newRoute = mapRequestToEntity(new Route(), routeRequest);
         return new RouteResponse(routeRepository.save(newRoute));
     }
 
     @Override
     public RouteResponse update(Long id, RouteRequest routeRequest) {
         Route existingRoute = routeRepository.findById(id)
-                .orElseThrow(() -> new HttpNotFound("Route not found with id: " + id));
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy tuyến đường với id: " + id));
 
-        if (routeRequest.getDepartureStationId().equals(routeRequest.getArrivalStationId())) {
-            throw new HttpBadRequest("Departure and arrival stations must be different");
-        }
-        Station departureStation = stationRepository.findById(routeRequest.getDepartureStationId())
-                .orElseThrow(() -> new HttpNotFound("Departure station not found with id: " + routeRequest.getDepartureStationId()));
-        Station arrivalStation = stationRepository.findById(routeRequest.getArrivalStationId())
-                .orElseThrow(() -> new HttpNotFound("Arrival station not found with id: " + routeRequest.getArrivalStationId()));
-
-        existingRoute.setDepartureStation(departureStation);
-        existingRoute.setArrivalStation(arrivalStation);
-        existingRoute.setPrice(routeRequest.getPrice());
-        existingRoute.setDuration(routeRequest.getDuration());
-        existingRoute.setDistance(routeRequest.getDistance());
-        return new RouteResponse(routeRepository.save(existingRoute));
-
-        }
+        Route updatedRoute = mapRequestToEntity(existingRoute, routeRequest);
+        return new RouteResponse(routeRepository.save(updatedRoute));
+    }
 
     @Override
     public void delete(Long id) {
-         if (!routeRepository.existsById(id)) {
-             throw new HttpNotFound("Route not found with id: " + id);
-         }
-            routeRepository.deleteById(id);
+        if (!routeRepository.existsById(id)) {
+            throw new HttpNotFound("Không tìm thấy tuyến đường với id: " + id);
+        }
+        routeRepository.deleteById(id);
+    }
+
+    private Route mapRequestToEntity(Route route, RouteRequest routeRequest) {
+        if (routeRequest.getDepartureStationId().equals(routeRequest.getArrivalStationId())) {
+            throw new HttpBadRequest("Điểm đi và điểm đến phải khác nhau");
+        }
+
+        Station departureStation = stationRepository.findById(routeRequest.getDepartureStationId())
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy bến đi với id: " + routeRequest.getDepartureStationId()));
+        Station arrivalStation = stationRepository.findById(routeRequest.getArrivalStationId())
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy bến đến với id: " + routeRequest.getArrivalStationId()));
+
+
+
+        route.setDepartureStation(departureStation);
+        route.setArrivalStation(arrivalStation);
+        route.setPrice(routeRequest.getPrice());
+        route.setDuration(routeRequest.getDuration());
+        route.setDistance(routeRequest.getDistance());
+
+
+        return route;
     }
 }

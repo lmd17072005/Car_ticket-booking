@@ -19,5 +19,30 @@ import java.util.List;
 public class BusImageController {
     private final IBusImageService busImageService;
 
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<BusImageResponse>> uploadImage(
+            @RequestParam("busId") Long busId,
+            @RequestParam("file") MultipartFile file) {
 
+        return new ResponseEntity<>(
+                ResponseWrapper.<BusImageResponse>builder()
+                        .status(HttpStatus.CREATED)
+                        .data(busImageService.addImageToBus(busId, file))
+                        .build(),
+                HttpStatus.CREATED
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<String>> deleteImage(@PathVariable("id") Long imageId) {
+        busImageService.deleteImage(imageId);
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .data("Image deleted successfully")
+                        .build()
+        );
+    }
 }

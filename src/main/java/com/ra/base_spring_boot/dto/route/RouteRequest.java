@@ -21,6 +21,9 @@ public class RouteRequest {
     @Min(value = 0, message = "Price must be more than or equal to 0")
     private BigDecimal price;
 
+    @NotNull(message = "Cancellation policy ID cannot be null")
+    private Long cancellationPolicyId;
+
     private Integer duration; // in minutes
     private Integer distance; // in kilometers
 }

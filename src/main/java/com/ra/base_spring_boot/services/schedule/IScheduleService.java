@@ -8,4 +8,6 @@ public interface IScheduleService {
     List<ScheduleResponse> findAll();
     ScheduleResponse findById(Long id);
     ScheduleResponse save(ScheduleRequest scheduleRequest);
+
+    List<ScheduleResponse> searchSchedules(Long departureStationId, Long arrivalStationId, String departureDate);
 }

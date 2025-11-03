@@ -4,6 +4,7 @@ package com.ra.base_spring_boot.controller;
 import com.ra.base_spring_boot.dto.ResponseWrapper;
 import com.ra.base_spring_boot.dto.ticket.TicketRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketResponse;
+import com.ra.base_spring_boot.model.constants.TicketStatus;
 import com.ra.base_spring_boot.services.ticket.ITicketService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,11 +35,13 @@ public class TicketController {
 
     @GetMapping("/my-tickets")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<ResponseWrapper<List<TicketResponse>>> getMyTickets() {
+    public ResponseEntity<ResponseWrapper<List<TicketResponse>>> getMyTickets(
+            @RequestParam(required = false)TicketStatus status
+            ) {
         return ResponseEntity.ok(
                 ResponseWrapper.<List<TicketResponse>>builder()
                         .status(HttpStatus.OK)
-                        .data(ticketService.getMyTickets())
+                        .data(ticketService.getMyTickets(status))
                         .build()
         );
     }

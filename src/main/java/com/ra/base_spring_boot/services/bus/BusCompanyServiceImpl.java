@@ -1,0 +1,79 @@
+package com.ra.base_spring_boot.services.bus;
+
+import com.ra.base_spring_boot.dto.bus.BusCompanyRequest;
+import com.ra.base_spring_boot.dto.bus.BusCompanyResponse;
+import com.ra.base_spring_boot.exception.HttpConflict;
+import com.ra.base_spring_boot.exception.HttpNotFound;
+import com.ra.base_spring_boot.model.Bus.BusCompany;
+import com.ra.base_spring_boot.repository.bus.IBusCompanyRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class BusCompanyServiceImpl implements IBusCompanyService {
+
+    private final IBusCompanyRepository busCompanyRepository;
+
+    @Override
+    public List<BusCompanyResponse> getPublicBusCompanies() {
+        return busCompanyRepository.findAll().stream()
+                .map(BusCompanyResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<BusCompanyResponse> findAll(Pageable pageable, String search) {
+        Page<BusCompany> busCompanyPage;
+        if (search != null && !search.isEmpty()) {
+            busCompanyPage = busCompanyRepository.findByCompanyNameContainingIgnoreCase(search, pageable);
+        } else {
+            busCompanyPage = busCompanyRepository.findAll(pageable);
+        }
+        return busCompanyPage.map(BusCompanyResponse::new);
+    }
+
+    @Override
+    public BusCompanyResponse findById(Long id) {
+        BusCompany busCompany = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Not found bus company with id: " + id));
+        return new BusCompanyResponse(busCompany);
+    }
+
+    @Override
+    public BusCompanyResponse save(BusCompanyRequest request) {
+        if (busCompanyRepository.existsByCompanyNameIgnoreCase(request.getCompanyName())) {
+            throw new HttpConflict("Bus company with name '" + request.getCompanyName() + "' already exists.");
+        }
+        BusCompany newBusCompany = new BusCompany();
+        mapRequestToEntity(newBusCompany, request);
+        return new BusCompanyResponse(busCompanyRepository.save(newBusCompany));
+    }
+
+    @Override
+    public BusCompanyResponse update(Long id, BusCompanyRequest request) {
+        BusCompany existingBusCompany = busCompanyRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Bus company not found with id: " + id));
+        mapRequestToEntity(existingBusCompany, request);
+        return new BusCompanyResponse(busCompanyRepository.save(existingBusCompany));
+    }
+
+    @Override
+    public void delete(Long id) {
+        if (!busCompanyRepository.existsById(id)) {
+            throw new HttpNotFound("Bus company not found with id: " + id);
+        }
+        busCompanyRepository.deleteById(id);
+    }
+
+    private void mapRequestToEntity(BusCompany busCompany, BusCompanyRequest request) {
+        busCompany.setCompanyName(request.getCompanyName());
+        busCompany.setImage(request.getImage());
+        busCompany.setDescriptions(request.getDescriptions());
+    }
+}

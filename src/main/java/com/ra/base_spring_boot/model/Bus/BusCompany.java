@@ -4,24 +4,22 @@ import com.ra.base_spring_boot.model.base.BaseObject;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bus_companies")
 @Getter
 @Setter
 public class BusCompany extends BaseObject {
-
     @Column(name = "company_name", nullable = false, length = 255)
     private String companyName;
 
     @Column(name = "image", length = 255)
     private String image;
 
-    @Column(name = "descriptions")
+    @Column(name = "descriptions", columnDefinition = "TEXT")
     private String descriptions;
 
     @CreationTimestamp
@@ -29,6 +27,6 @@ public class BusCompany extends BaseObject {
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 }

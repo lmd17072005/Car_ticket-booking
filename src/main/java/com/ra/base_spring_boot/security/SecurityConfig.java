@@ -55,10 +55,10 @@ public class SecurityConfig
                 .authorizeHttpRequests(
                         url -> url
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers(
-                                        "/api/v1/auth/**",
-                                        "/api/v1/banners/**"
-                                ).permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register").permitAll()
+                                .requestMatchers("/api/v1/banners/**").permitAll()
+                                .requestMatchers("/api/v1/bus-companies/**").permitAll()
+                                .requestMatchers("/api/v1/stations/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/buses/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/routes/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/v1/schedules/**").permitAll()

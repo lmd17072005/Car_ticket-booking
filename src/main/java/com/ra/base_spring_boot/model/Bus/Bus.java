@@ -9,14 +9,14 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(
-    name = "buses",
-    uniqueConstraints = @UniqueConstraint(columnNames = "license_plate")
+        name = "buses",
+        uniqueConstraints = @UniqueConstraint(columnNames = "license_plate")
 )
 @Getter
 @Setter
@@ -34,7 +34,7 @@ public class Bus extends BaseObject {
     @Column(name = "capacity", nullable = false)
     private int capacity;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
     private BusCompany company;
 
@@ -46,13 +46,18 @@ public class Bus extends BaseObject {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "bus_station",
-        joinColumns = @JoinColumn(name = "bus_id"),
-        inverseJoinColumns = @JoinColumn(name = "station_id")
-    )  
+            name = "bus_station",
+            joinColumns = @JoinColumn(name = "bus_id"),
+            inverseJoinColumns = @JoinColumn(name = "station_id")
+    )
     private Set<Station> stations = new HashSet<>();
-    @OneToMany(mappedBy = "bus")
-    private List<BusImage> images = new ArrayList<>();  
+
+    @OneToMany(mappedBy = "bus", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<BusImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "bus", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Seat> seats = new ArrayList<>();
+
 }

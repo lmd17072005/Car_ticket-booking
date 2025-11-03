@@ -6,6 +6,8 @@ import com.ra.base_spring_boot.dto.bus.BusRequest;
 import com.ra.base_spring_boot.dto.bus.BusResponse;
 import com.ra.base_spring_boot.services.bus.IBusService;
 import jakarta.validation.Valid;
+import com.ra.base_spring_boot.dto.bus.BusImageResponse;
+import com.ra.base_spring_boot.services.bus.IBusImageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,7 @@ import java.util.List;
 public class BusController {
 
     private final IBusService busService;
+    private final IBusImageService busImageService;
 
     @GetMapping
     public ResponseEntity<ResponseWrapper<List<BusResponse>>> getAllBuses() {
@@ -37,6 +40,16 @@ public class BusController {
                 ResponseWrapper.<BusResponse>builder()
                         .status(HttpStatus.OK)
                         .data(busService.findById(id))
+                        .build()
+        );
+    }
+
+    @GetMapping("/{id}/images")
+    public ResponseEntity<ResponseWrapper<List<BusImageResponse>>> getBusImages(@PathVariable("id") Long busId) {
+        return ResponseEntity.ok(
+                ResponseWrapper.<List<BusImageResponse>>builder()
+                        .status(HttpStatus.OK)
+                        .data(busImageService.findImagesByBusId(busId))
                         .build()
         );
     }

@@ -32,24 +32,4 @@ public class CancellationPolicyController {
         return ResponseEntity.ok(ResponseWrapper.<CancellationPolicyResponse>builder()
                 .status(HttpStatus.OK).data(cancellationPolicyService.findById(id)).build());
     }
-
-    @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ResponseWrapper<CancellationPolicyResponse>> create(@Valid @RequestBody CancellationPolicyRequest request) {
-        return new ResponseEntity<>(ResponseWrapper.<CancellationPolicyResponse>builder().status(HttpStatus.CREATED).data(cancellationPolicyService.save(request)).build(), HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ResponseWrapper<CancellationPolicyResponse>> update(@PathVariable Long id, @Valid @RequestBody CancellationPolicyRequest request) {
-        return ResponseEntity.ok(ResponseWrapper.<CancellationPolicyResponse>builder()
-                .status(HttpStatus.OK).data(cancellationPolicyService.update(id, request)).build());
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ResponseWrapper<String>> delete(@PathVariable Long id) {
-        cancellationPolicyService.delete(id);
-        return ResponseEntity.ok(ResponseWrapper.<String>builder().status(HttpStatus.OK).data("Cancellation Policy deleted successfully").build());
-    }
 }
