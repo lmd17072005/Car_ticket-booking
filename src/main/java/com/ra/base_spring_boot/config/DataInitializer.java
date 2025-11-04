@@ -64,7 +64,6 @@ public class DataInitializer implements CommandLineRunner {
         if (cancellationPolicyRepository.count() == 0) {
             log.info("Khởi tạo các chính sách hủy vé mặc định...");
 
-            // Mốc 1: Hủy trước 24 giờ (1440 phút), hoàn 100%
             CancellationPolicy policy1 = new CancellationPolicy();
             policy1.setDescriptions("Hoàn 100% nếu hủy trước 24 giờ");
             policy1.setCancellationTimeLimit(1440);
@@ -72,7 +71,6 @@ public class DataInitializer implements CommandLineRunner {
             policy1.setRoute(null); // Quy tắc chung
             cancellationPolicyRepository.save(policy1);
 
-            // Mốc 2: Hủy trước 12 giờ (720 phút), hoàn 70%
             CancellationPolicy policy2 = new CancellationPolicy();
             policy2.setDescriptions("Hoàn 70% nếu hủy trước 12 giờ");
             policy2.setCancellationTimeLimit(720);
@@ -80,7 +78,6 @@ public class DataInitializer implements CommandLineRunner {
             policy2.setRoute(null);
             cancellationPolicyRepository.save(policy2);
 
-            // Mốc 3: Hủy trước 1 giờ (60 phút), hoàn 30%
             CancellationPolicy policy3 = new CancellationPolicy();
             policy3.setDescriptions("Hoàn 30% nếu hủy trước 1 giờ");
             policy3.setCancellationTimeLimit(60);
