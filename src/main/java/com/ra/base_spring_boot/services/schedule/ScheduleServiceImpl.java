@@ -1,5 +1,6 @@
 package com.ra.base_spring_boot.services.schedule;
 
+import com.ra.base_spring_boot.dto.payment.CalculatedCancellationMilestone;
 import com.ra.base_spring_boot.dto.schedule.ScheduleRequest;
 import com.ra.base_spring_boot.dto.schedule.ScheduleResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
@@ -9,18 +10,27 @@ import com.ra.base_spring_boot.model.Bus.BusReview;
 import com.ra.base_spring_boot.model.Bus.Route;
 import com.ra.base_spring_boot.model.Bus.Schedule;
 import com.ra.base_spring_boot.model.constants.ScheduleStatus;
+import com.ra.base_spring_boot.model.constants.SeatType;
+import com.ra.base_spring_boot.model.payment.CancellationPolicy;
 import com.ra.base_spring_boot.repository.bus.IBusRepository;
 import com.ra.base_spring_boot.repository.review.IBusReviewRepository;
 import com.ra.base_spring_boot.repository.route.IRouteRepository;
 import com.ra.base_spring_boot.repository.schedule.IScheduleRepository;
+import com.ra.base_spring_boot.specification.ScheduleSpecification;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,15 +44,14 @@ public class ScheduleServiceImpl implements IScheduleService {
 
     @Override
     public List<ScheduleResponse> findAll() {
-        return
-                scheduleRepository.findAll().stream().map(ScheduleResponse::new).collect(Collectors.toList());
+        return scheduleRepository.findAll().stream().map(this::mapToScheduleResponse).collect(Collectors.toList());
     }
 
     @Override
     public ScheduleResponse findById(Long id) {
         Schedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new HttpNotFound("Schedule not found with id: " + id));
-        return new ScheduleResponse(schedule);
+        return mapToScheduleResponse(schedule);
     }
 
     @Override
@@ -67,42 +76,102 @@ public class ScheduleServiceImpl implements IScheduleService {
     }
 
     @Override
-    public List<ScheduleResponse> searchSchedules(Long departureStationId, Long arrivalStationId, String departureDate) {
-        // Chuyển đổi và validate ngày
-        LocalDateTime startOfDay;
-        LocalDateTime endOfDay;
+    public Page<ScheduleResponse> searchSchedules(
+            Long departureStationId, Long arrivalStationId, String departureDate,
+            Integer fromHour, Integer toHour, BigDecimal maxPrice, List<Long> companyIds, List<SeatType> seatTypes,
+            Pageable pageable) {
+
+        LocalDateTime startOfDay, endOfDay;
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
             LocalDate date = LocalDate.parse(departureDate, formatter);
-            startOfDay = date.atStartOfDay(); // Ví dụ: 2025-11-15 00:00:00
-            endOfDay = date.atTime(LocalTime.MAX);   // Ví dụ: 2025-11-15 23:59:59.999...
+            startOfDay = date.atStartOfDay();
+            endOfDay = date.atTime(LocalTime.MAX);
         } catch (DateTimeParseException e) {
             throw new HttpBadRequest("Định dạng ngày không hợp lệ. Vui lòng sử dụng yyyy-MM-dd.");
         }
 
-        // Gọi repository để tìm kiếm các lịch trình
-        List<Schedule> schedules = scheduleRepository.findSchedulesByCriteria(departureStationId, arrivalStationId, startOfDay, endOfDay);
+        Specification<Schedule> spec = ScheduleSpecification.searchByCriteria(
+                departureStationId, arrivalStationId, startOfDay, endOfDay,
+                fromHour, toHour, maxPrice, companyIds, seatTypes);
 
-        // Chuyển đổi sang DTO và tính toán các thông-tin phụ
-        return schedules.stream().map(schedule -> {
-            // Sử dụng constructor của ScheduleResponse để chuyển đổi
-            ScheduleResponse response = new ScheduleResponse(schedule);
+        Page<Schedule> schedulePage = scheduleRepository.findAll(spec, pageable);
 
-            // Tính toán thông-tin đánh giá
-            List<BusReview> reviews = busReviewRepository.findByBus(schedule.getBus());
-            double avgRating = reviews.stream()
-                    .mapToInt(BusReview::getRating)
-                    .average()
-                    .orElse(0.0); // Trả về 0.0 nếu không có đánh giá nào
+        return schedulePage.map(this::mapToScheduleResponse);
+    }
 
-            // Làm tròn đến 1 chữ số thập phân
-            avgRating = Math.round(avgRating * 10.0) / 10.0;
+    @Override
+    public Page<ScheduleResponse> findSchedulesByCompany(Long companyId, String departureDate, Pageable pageable) {
+        LocalDateTime start, end;
+        if (departureDate != null && !departureDate.isEmpty()) {
+            try {
+                LocalDate date = LocalDate.parse(departureDate, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                start = date.atStartOfDay();
+                end = date.atTime(LocalTime.MAX);
+            } catch (DateTimeParseException e) {
+                throw new HttpBadRequest("Định dạng ngày không hợp lệ. Vui lòng sử dụng yyyy-MM-dd.");
+            }
+        } else {
+            start = LocalDateTime.now();
+            end = start.plusHours(24);
+        }
 
-            // Gán giá trị đã tính vào response
-            response.setAverageRating(avgRating);
-            response.setTotalRatings(reviews.size());
+        Page<Schedule> schedulePage = scheduleRepository.findSchedulesByCompany(companyId, start, end, pageable);
 
-            return response;
-        }).collect(Collectors.toList());
+        return schedulePage.map(this::mapToScheduleResponse);
+    }
+
+    private ScheduleResponse mapToScheduleResponse(Schedule schedule) {
+        ScheduleResponse response = new ScheduleResponse(schedule);
+
+        List<BusReview> reviews = busReviewRepository.findByBus(schedule.getBus());
+        double avgRating = reviews.stream()
+                .mapToInt(BusReview::getRating)
+                .average()
+                .orElse(0.0);
+        avgRating = Math.round(avgRating * 10.0) / 10.0;
+        response.setAverageRating(avgRating);
+        response.setTotalRatings(reviews.size());
+
+        response.setCancellationMilestones(calculateMilestones(schedule));
+
+        return response;
+    }
+
+    private List<CalculatedCancellationMilestone> calculateMilestones(Schedule schedule) {
+        List<CalculatedCancellationMilestone> milestones = new ArrayList<>();
+        if (schedule.getRoute() == null || schedule.getRoute().getCancellationPolicies() == null) {
+            return milestones;
+        }
+
+        List<CancellationPolicy> sortedPolicies = schedule.getRoute().getCancellationPolicies().stream()
+                .sorted(Comparator.comparing(CancellationPolicy::getCancellationTimeLimit).reversed())
+                .toList();
+
+        LocalDateTime previousDeadline = null;
+
+        for (CancellationPolicy policy : sortedPolicies) {
+            CalculatedCancellationMilestone milestone = new CalculatedCancellationMilestone();
+            LocalDateTime deadline = schedule.getDepartureTime().minusMinutes(policy.getCancellationTimeLimit());
+            milestone.setDeadline(deadline);
+            milestone.setCancellationFeePercentage(100 - policy.getRefundPercentage());
+
+            if (previousDeadline == null) {
+                milestone.setStartTimeDescription("Sau khi đặt");
+            } else {
+                milestone.setStartTime(previousDeadline);
+            }
+            milestones.add(milestone);
+            previousDeadline = deadline;
+        }
+
+        if (previousDeadline != null) {
+            CalculatedCancellationMilestone finalMilestone = new CalculatedCancellationMilestone();
+            finalMilestone.setStartTime(previousDeadline);
+            finalMilestone.setDeadlineDescription("Giờ khởi hành");
+            finalMilestone.setCancellationFeePercentage(100);
+            milestones.add(finalMilestone);
+        }
+        return milestones;
     }
 }

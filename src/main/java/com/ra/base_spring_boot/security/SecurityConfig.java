@@ -8,6 +8,7 @@ import com.ra.base_spring_boot.security.principle.MyUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -22,7 +23,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.http.HttpMethod;
 
 import java.util.List;
 
@@ -55,19 +55,18 @@ public class SecurityConfig
                 .authorizeHttpRequests(
                         url -> url
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register").permitAll()
-                                .requestMatchers("/api/v1/banners/**").permitAll()
-                                .requestMatchers("/api/v1/bus-companies/**").permitAll()
-                                .requestMatchers("/api/v1/stations/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/buses/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/routes/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/api/v1/schedules/**").permitAll()
+                                .requestMatchers("/api/v1/auth/**").permitAll()
+                                .requestMatchers(HttpMethod.GET,
+                                        "/api/v1/banners/**",
+                                        "/api/v1/bus-companies/**",
+                                        "/api/v1/stations/**",
+                                        "/api/v1/buses/**",
+                                        "/api/v1/routes/**",
+                                        "/api/v1/schedules/**",
+                                        "/api/v1/cancellation-policies/**"
+                                ).permitAll()
+                                .requestMatchers("/api/v1/user/**", "/api/v1/tickets/**", "/api/v1/reviews/**").hasAuthority(RoleName.ROLE_USER.toString())
                                 .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
-                                .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
-                                .requestMatchers(HttpMethod.GET, "/api/v1/cancellation-policies/**").permitAll()
-                                .requestMatchers("api/v1/tickets").hasAuthority(RoleName.ROLE_USER.toString())
-                                .requestMatchers(HttpMethod.POST, "api/v1/cancellation-policies").hasAuthority(RoleName.ROLE_ADMIN.toString())
-                                .requestMatchers(HttpMethod.DELETE, "api/v1/cancellation-policies/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
                                 .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

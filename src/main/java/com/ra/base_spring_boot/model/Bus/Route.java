@@ -1,12 +1,12 @@
 package com.ra.base_spring_boot.model.Bus;
 
 import com.ra.base_spring_boot.model.base.BaseObject;
+import com.ra.base_spring_boot.model.payment.CancellationPolicy;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import com.ra.base_spring_boot.model.payment.CancellationPolicy;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -19,11 +19,11 @@ import java.util.List;
 @Setter
 public class Route extends BaseObject {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "departure_station_id", nullable = false)
     private Station departureStation;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "arrival_station_id", nullable = false)
     private Station arrivalStation;
 
@@ -35,6 +35,11 @@ public class Route extends BaseObject {
 
     @Column(name = "distance")
     private Integer distance;
+
+
+    @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<CancellationPolicy> cancellationPolicies = new ArrayList<>();
+
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

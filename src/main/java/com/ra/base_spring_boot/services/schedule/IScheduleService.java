@@ -2,6 +2,11 @@ package com.ra.base_spring_boot.services.schedule;
 
 import com.ra.base_spring_boot.dto.schedule.ScheduleRequest;
 import com.ra.base_spring_boot.dto.schedule.ScheduleResponse;
+import com.ra.base_spring_boot.model.constants.SeatType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface IScheduleService {
@@ -9,5 +14,11 @@ public interface IScheduleService {
     ScheduleResponse findById(Long id);
     ScheduleResponse save(ScheduleRequest scheduleRequest);
 
-    List<ScheduleResponse> searchSchedules(Long departureStationId, Long arrivalStationId, String departureDate);
+    Page<ScheduleResponse> searchSchedules(
+            Long departureStationId, Long arrivalStationId, String departureDate,
+            Integer fromHour, Integer toHour, BigDecimal maxPrice, List<Long> companyIds, List<SeatType> seatTypes,
+            Pageable pageable
+    );
+
+    Page<ScheduleResponse> findSchedulesByCompany(Long companyId, String departureDate, Pageable pageable);
 }
