@@ -60,34 +60,6 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(admin);
             log.info("Khởi tạo tài khoản ADMIN thành công.");
         }
-
-        if (cancellationPolicyRepository.count() == 0) {
-            log.info("Khởi tạo các chính sách hủy vé mặc định...");
-
-            CancellationPolicy policy1 = new CancellationPolicy();
-            policy1.setDescriptions("Hoàn 100% nếu hủy trước 24 giờ");
-            policy1.setCancellationTimeLimit(1440);
-            policy1.setRefundPercentage(100);
-            policy1.setRoute(null); // Quy tắc chung
-            cancellationPolicyRepository.save(policy1);
-
-            CancellationPolicy policy2 = new CancellationPolicy();
-            policy2.setDescriptions("Hoàn 70% nếu hủy trước 12 giờ");
-            policy2.setCancellationTimeLimit(720);
-            policy2.setRefundPercentage(70);
-            policy2.setRoute(null);
-            cancellationPolicyRepository.save(policy2);
-
-            CancellationPolicy policy3 = new CancellationPolicy();
-            policy3.setDescriptions("Hoàn 30% nếu hủy trước 1 giờ");
-            policy3.setCancellationTimeLimit(60);
-            policy3.setRefundPercentage(30);
-            policy3.setRoute(null);
-            cancellationPolicyRepository.save(policy3);
-
-            log.info("-> Khởi tạo các chính sách hủy vé thành công.");
-        }
-
         log.info("Hoàn tất quá trình khởi tạo dữ liệu.");
     }
 }

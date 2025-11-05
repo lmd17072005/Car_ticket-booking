@@ -16,7 +16,7 @@ public interface ITicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByUser(User user);
 
-    Optional<Ticket> findByIdAndUser_Phone(Long id, String phone);
+    Optional<Ticket> findByTicketCodeAndUser_Phone(String ticketCode, String phone);
 
     List<Ticket> findByUserAndStatus(User user, TicketStatus status);
 

@@ -10,6 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import com.ra.base_spring_boot.services.file.IFileStorageService;
+import org.springframework.web.multipart.MultipartFile;
+
+
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -19,6 +23,7 @@ import java.util.stream.Collectors;
 public class BusCompanyServiceImpl implements IBusCompanyService {
 
     private final IBusCompanyRepository busCompanyRepository;
+    private final IFileStorageService fileStorageService;
 
     @Override
     public List<BusCompanyResponse> getPublicBusCompanies() {
@@ -75,5 +80,16 @@ public class BusCompanyServiceImpl implements IBusCompanyService {
         busCompany.setCompanyName(request.getCompanyName());
         busCompany.setImage(request.getImage());
         busCompany.setDescriptions(request.getDescriptions());
+    }
+
+    @Override
+    public BusCompanyResponse uploadImage(Long companyId, MultipartFile imageFile) {
+        BusCompany busCompany = busCompanyRepository.findById(companyId)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy nhà xe với ID: " + companyId));
+
+        String imageUrl = fileStorageService.uploadFile(imageFile);
+        busCompany.setImage(imageUrl);
+        BusCompany savedBusCompany = busCompanyRepository.save(busCompany);
+        return new BusCompanyResponse(savedBusCompany);
     }
 }

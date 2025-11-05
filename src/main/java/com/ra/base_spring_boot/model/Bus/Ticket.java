@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import java.util.UUID;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -55,4 +56,14 @@ public class Ticket extends BaseObject {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    @Column(name = "ticket_code", nullable = false, unique = true, length = 100)
+    private String ticketCode;
+
+    @PrePersist
+    public void generateTicketCode() {
+        if (this.ticketCode == null) {
+            this.ticketCode = "VVT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+    }
 }

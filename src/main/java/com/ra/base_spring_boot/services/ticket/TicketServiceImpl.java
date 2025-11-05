@@ -16,6 +16,7 @@ import com.ra.base_spring_boot.model.payment.CancellationPolicy;
 import com.ra.base_spring_boot.model.user.User;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.repository.bus.ISeatRepository;
+import com.ra.base_spring_boot.dto.ticket.CancelTicketRequest;
 import com.ra.base_spring_boot.repository.payment.ICancellationPolicyRepository;
 import com.ra.base_spring_boot.repository.schedule.IScheduleRepository;
 import com.ra.base_spring_boot.repository.ticket.ITicketRepository;
@@ -87,57 +88,56 @@ public class TicketServiceImpl implements ITicketService {
 
     @Override
     @Transactional
-    public void cancelTicket(Long ticketId) {
+    public void cancelTicket(Long ticketId, CancelTicketRequest cancelRequest) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User currentUser = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new HttpNotFound("User not found"));
-
         Ticket ticket = ticketRepository.findById(ticketId).orElseThrow(() -> new HttpNotFound("Ticket not found with id : " + ticketId));
 
         if (!ticket.getUser().getId().equals(currentUser.getId())) {
             throw new HttpForbiden("User is not authorized to cancel this ticket.");
         }
-
         if (ticket.getStatus() != TicketStatus.BOOKED) {
             throw new HttpConflict("Only booked tickets can be cancelled.");
         }
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime departureTime = ticket.getDepartureTime();
-
         if (now.isAfter(departureTime)) {
             throw new HttpBadRequest("Cannot cancel ticket after departure time.");
         }
         long minutesUntilDeparture = Duration.between(now, departureTime).toMinutes();
 
-
-        List<CancellationPolicy> generalPolicies = cancellationPolicyRepository.findByRouteIsNull();
-
-        Optional<CancellationPolicy> applicablePolicyOpt = generalPolicies.stream()
-                .filter(policy -> minutesUntilDeparture >= policy.getCancellationTimeLimit())
-                .max(Comparator.comparing(CancellationPolicy::getCancellationTimeLimit));
-
-        int refundPercentage = 0;
-        if (applicablePolicyOpt.isPresent()) {
-            refundPercentage = applicablePolicyOpt.get().getRefundPercentage();
+        int refundPercentage;
+        if (minutesUntilDeparture > 1440) {
+            refundPercentage = 100;
+        } else if (minutesUntilDeparture > 720) {
+            refundPercentage = 70;
         } else {
-                     throw new HttpBadRequest("Đã quá thời gian cho phép hủy vé.");
+            refundPercentage = 0;
         }
 
         ticket.setStatus(TicketStatus.CANCELLED);
-        ticketRepository.save(ticket);
 
         Schedule schedule = ticket.getSchedule();
         schedule.setAvailableSeats(schedule.getAvailableSeats() + 1);
         if (schedule.getStatus() == ScheduleStatus.FULL) {
             schedule.setStatus(ScheduleStatus.AVAILABLE);
         }
-        scheduleRepository.save(schedule);
 
-        // 5. Logic hoàn tiền
+        CancellationPolicy cancellationLog = new CancellationPolicy();
+        cancellationLog.setDescriptions(cancelRequest.getDescriptions());
+        cancellationLog.setRoute(ticket.getSchedule().getRoute());
+        cancellationLog.setCancellationTimeLimit((int) minutesUntilDeparture);
+        cancellationLog.setRefundPercentage(refundPercentage);
+
+        cancellationPolicyRepository.save(cancellationLog);
+        scheduleRepository.save(schedule);
+        ticketRepository.save(ticket);
+
         if (refundPercentage > 0) {
             BigDecimal refundAmount = ticket.getPrice().multiply(BigDecimal.valueOf(refundPercentage / 100.0));
-            // TODO: Gọi đến Payment Service để thực hiện hoàn tiền
-            System.out.println("Yêu cầu hoàn tiền: " + refundAmount + " (" + refundPercentage + "%) cho vé ID: " + ticket.getId());
+            // TODO: Gọi đến Payment Service
+            System.out.println("Yêu cầu hoàn tiền: " + refundAmount + " cho vé ID: " + ticket.getId());
         }
     }
 
@@ -160,8 +160,8 @@ public class TicketServiceImpl implements ITicketService {
 
     @Override
     public TicketResponse lookupTicket(TicketLookupRequest request) {
-        Ticket ticket = ticketRepository.findByIdAndUser_Phone(request.getTicketId(), request.getPhone())
-                .orElseThrow(() -> new HttpNotFound("Ticket not found with the provided ID and phone number."));
+        Ticket ticket = ticketRepository.findByTicketCodeAndUser_Phone(request.getTicketCode(), request.getPhone())
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy vé phù hợp với thông tin đã cung cấp."));
         return new TicketResponse(ticket);
     }
 }

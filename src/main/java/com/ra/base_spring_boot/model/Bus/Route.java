@@ -37,10 +37,6 @@ public class Route extends BaseObject {
     private Integer distance;
 
 
-    @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<CancellationPolicy> cancellationPolicies = new ArrayList<>();
-
-
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

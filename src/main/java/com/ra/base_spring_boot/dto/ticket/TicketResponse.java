@@ -19,9 +19,11 @@ public class TicketResponse {
     private LocalDateTime arrivalTime;
     private BigDecimal price;
     private String status;
+    private String ticketCode;
 
     public TicketResponse(Ticket ticket) {
         this.id = ticket.getId();
+        this.ticketCode = ticket.getTicketCode();
         this.departureTime = ticket.getDepartureTime();
         this.arrivalTime = ticket.getArrivalTime();
         this.price = ticket.getPrice();

@@ -6,16 +6,20 @@ import com.ra.base_spring_boot.exception.HttpConflict;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Bus.Station;
 import com.ra.base_spring_boot.repository.route.IStationRepository;
+import com.ra.base_spring_boot.services.file.IFileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class StationServiceImpl implements IStationService {
     private final IStationRepository stationRepository;
+    private final IFileStorageService fileStorageService;
 
     @Override
     public List<StationResponse> getPublicStations() {
@@ -68,6 +72,32 @@ public class StationServiceImpl implements IStationService {
 
         stationRepository.deleteById(id);
     }
+
+    @Override
+    public StationResponse uploadImage(Long stationId, MultipartFile imageFile) {
+        Station station = stationRepository.findById(stationId)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy bến xe với ID: " + stationId));
+
+        String imageUrl = fileStorageService.uploadFile(imageFile);
+        station.setImage(imageUrl);
+
+        Station savedStation = stationRepository.save(station);
+        return StationResponse.fromEntity(savedStation);
+    }
+
+
+    @Override
+    public StationResponse uploadWallpaper(Long stationId, MultipartFile wallpaperFile) {
+        Station station = stationRepository.findById(stationId)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy bến xe với ID: " + stationId));
+
+        String wallpaperUrl = fileStorageService.uploadFile(wallpaperFile);
+        station.setWallpaper(wallpaperUrl);
+
+        Station savedStation = stationRepository.save(station);
+        return StationResponse.fromEntity(savedStation);
+    }
+
 
     private Station mapRequestToEntity(Station station, StationRequest request) {
         station.setName(request.getName());

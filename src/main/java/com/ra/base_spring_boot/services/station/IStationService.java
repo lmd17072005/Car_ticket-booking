@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.dto.station.StationRequest;
 import com.ra.base_spring_boot.dto.station.StationResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -15,4 +16,6 @@ public interface IStationService {
     StationResponse save(StationRequest request);
     StationResponse update(Long id, StationRequest request);
     void delete(Long id);
+    StationResponse uploadImage(Long stationId, MultipartFile imageFile);
+    StationResponse uploadWallpaper(Long stationId, MultipartFile wallpaperFile);
 }

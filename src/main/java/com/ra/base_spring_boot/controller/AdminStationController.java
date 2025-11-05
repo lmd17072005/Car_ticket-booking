@@ -10,9 +10,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/admin/stations")
@@ -73,6 +75,30 @@ public class AdminStationController {
                 ResponseWrapper.<String>builder()
                         .status(HttpStatus.OK)
                         .data("Xóa bến xe thành công")
+                        .build()
+        );
+    }
+
+    @PostMapping(value = "/{id}/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseWrapper<StationResponse>> uploadImage(
+            @PathVariable("id") Long stationId,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(
+                ResponseWrapper.<StationResponse>builder()
+                        .status(HttpStatus.OK)
+                        .data(stationService.uploadImage(stationId, file))
+                        .build()
+        );
+    }
+
+    @PostMapping(value = "/{id}/upload-wallpaper", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseWrapper<StationResponse>> uploadWallpaper(
+            @PathVariable("id") Long stationId,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(
+                ResponseWrapper.<StationResponse>builder()
+                        .status(HttpStatus.OK)
+                        .data(stationService.uploadWallpaper(stationId, file))
                         .build()
         );
     }

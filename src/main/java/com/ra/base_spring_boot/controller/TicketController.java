@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.controller;
 
 
 import com.ra.base_spring_boot.dto.ResponseWrapper;
+import com.ra.base_spring_boot.dto.ticket.CancelTicketRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketResponse;
 import com.ra.base_spring_boot.model.constants.TicketStatus;
@@ -48,8 +49,10 @@ public class TicketController {
 
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<ResponseWrapper<String>> cancelTicket(@PathVariable("id") Long ticketId) {
-        ticketService.cancelTicket(ticketId);
+    public ResponseEntity<ResponseWrapper<String>> cancelTicket(
+            @PathVariable("id") Long ticketId,
+            @Valid @RequestBody CancelTicketRequest cancelRequest) { // Thêm @RequestBody
+        ticketService.cancelTicket(ticketId, cancelRequest);
         return ResponseEntity.ok(
                 ResponseWrapper.<String>builder()
                         .status(HttpStatus.OK)

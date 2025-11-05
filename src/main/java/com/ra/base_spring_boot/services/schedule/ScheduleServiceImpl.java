@@ -13,6 +13,7 @@ import com.ra.base_spring_boot.model.constants.ScheduleStatus;
 import com.ra.base_spring_boot.model.constants.SeatType;
 import com.ra.base_spring_boot.model.payment.CancellationPolicy;
 import com.ra.base_spring_boot.repository.bus.IBusRepository;
+import com.ra.base_spring_boot.repository.payment.ICancellationPolicyRepository;
 import com.ra.base_spring_boot.repository.review.IBusReviewRepository;
 import com.ra.base_spring_boot.repository.route.IRouteRepository;
 import com.ra.base_spring_boot.repository.schedule.IScheduleRepository;
@@ -41,6 +42,8 @@ public class ScheduleServiceImpl implements IScheduleService {
     private final IRouteRepository routeRepository;
     private final IBusRepository busRepository;
     private final IBusReviewRepository busReviewRepository;
+    private final ICancellationPolicyRepository cancellationPolicyRepository;
+
 
     @Override
     public List<ScheduleResponse> findAll() {
@@ -94,7 +97,6 @@ public class ScheduleServiceImpl implements IScheduleService {
         Specification<Schedule> spec = ScheduleSpecification.searchByCriteria(
                 departureStationId, arrivalStationId, startOfDay, endOfDay,
                 fromHour, toHour, maxPrice, companyIds, seatTypes);
-
         Page<Schedule> schedulePage = scheduleRepository.findAll(spec, pageable);
 
         return schedulePage.map(this::mapToScheduleResponse);
@@ -140,11 +142,16 @@ public class ScheduleServiceImpl implements IScheduleService {
 
     private List<CalculatedCancellationMilestone> calculateMilestones(Schedule schedule) {
         List<CalculatedCancellationMilestone> milestones = new ArrayList<>();
-        if (schedule.getRoute() == null || schedule.getRoute().getCancellationPolicies() == null) {
-            return milestones;
+
+        // SỬA LỖI: Lấy các chính sách chung từ repository, không lấy từ Route
+        List<CancellationPolicy> generalPolicies = cancellationPolicyRepository.findByRouteIsNull();
+
+        if (generalPolicies == null || generalPolicies.isEmpty()) {
+            return milestones; // Trả về danh sách rỗng nếu không có chính sách nào được cấu hình
         }
 
-        List<CancellationPolicy> sortedPolicies = schedule.getRoute().getCancellationPolicies().stream()
+        // Sắp xếp các chính sách theo mốc thời gian từ cao đến thấp
+        List<CancellationPolicy> sortedPolicies = generalPolicies.stream()
                 .sorted(Comparator.comparing(CancellationPolicy::getCancellationTimeLimit).reversed())
                 .toList();
 
@@ -153,6 +160,7 @@ public class ScheduleServiceImpl implements IScheduleService {
         for (CancellationPolicy policy : sortedPolicies) {
             CalculatedCancellationMilestone milestone = new CalculatedCancellationMilestone();
             LocalDateTime deadline = schedule.getDepartureTime().minusMinutes(policy.getCancellationTimeLimit());
+
             milestone.setDeadline(deadline);
             milestone.setCancellationFeePercentage(100 - policy.getRefundPercentage());
 
@@ -165,6 +173,7 @@ public class ScheduleServiceImpl implements IScheduleService {
             previousDeadline = deadline;
         }
 
+        // Thêm mốc cuối cùng (từ mốc cuối cùng đến giờ khởi hành, phí 100%)
         if (previousDeadline != null) {
             CalculatedCancellationMilestone finalMilestone = new CalculatedCancellationMilestone();
             finalMilestone.setStartTime(previousDeadline);
@@ -172,6 +181,7 @@ public class ScheduleServiceImpl implements IScheduleService {
             finalMilestone.setCancellationFeePercentage(100);
             milestones.add(finalMilestone);
         }
+
         return milestones;
     }
 }

@@ -8,9 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class TicketLookupRequest {
-    @NotNull(message = "Ticket ID cannot be null")
-    private Long ticketId;
+    @NotBlank(message = "Mã vé không được để trống")
+    private String ticketCode;
 
-    @NotBlank(message = "Phone number cannot be blank")
+    @NotBlank(message = "Số điện thoại không được để trống")
     private String phone;
 }

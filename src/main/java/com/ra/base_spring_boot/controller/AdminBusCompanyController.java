@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/admin/bus-companies")
@@ -73,6 +75,19 @@ public class AdminBusCompanyController {
                 ResponseWrapper.<String>builder()
                         .status(HttpStatus.OK)
                         .data("Company deleted successfully")
+                        .build()
+        );
+    }
+
+    @PostMapping(value = "/{id}/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ResponseWrapper<BusCompanyResponse>> uploadImage(
+            @PathVariable("id") Long companyId,
+            @RequestParam("file") MultipartFile file) {
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<BusCompanyResponse>builder()
+                        .status(HttpStatus.OK)
+                        .data(busCompanyService.uploadImage(companyId, file))
                         .build()
         );
     }

@@ -64,8 +64,6 @@ public class RouteServiceImpl implements IRouteService {
         Station arrivalStation = stationRepository.findById(routeRequest.getArrivalStationId())
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy bến đến với id: " + routeRequest.getArrivalStationId()));
 
-
-
         route.setDepartureStation(departureStation);
         route.setArrivalStation(arrivalStation);
         route.setPrice(routeRequest.getPrice());

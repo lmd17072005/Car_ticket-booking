@@ -1,22 +1,27 @@
 package com.ra.base_spring_boot.dto.station;
 
 import com.ra.base_spring_boot.model.Bus.Station;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder // Thêm Builder để dễ tạo đối tượng
 public class StationResponse {
+
     private Long id;
     private String name;
+    private String location;
+    private String descriptions;
     private String image;
     private String wallpaper;
-    private String descriptions;
-    private String location;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -24,10 +29,10 @@ public class StationResponse {
         return StationResponse.builder()
                 .id(station.getId())
                 .name(station.getName())
+                .location(station.getLocation())
+                .descriptions(station.getDescriptions())
                 .image(station.getImage())
                 .wallpaper(station.getWallpaper())
-                .descriptions(station.getDescriptions())
-                .location(station.getLocation())
                 .createdAt(station.getCreatedAt())
                 .updatedAt(station.getUpdatedAt())
                 .build();
