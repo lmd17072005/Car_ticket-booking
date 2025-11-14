@@ -23,6 +23,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.ra.base_spring_boot.exception.HttpConflict;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -79,6 +82,44 @@ public class ScheduleServiceImpl implements IScheduleService {
     }
 
     @Override
+    public ScheduleResponse update(Long id, ScheduleRequest scheduleRequest) {
+        Schedule existingSchedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy lịch trình với ID: " + id));
+
+        if (existingSchedule.getAvailableSeats() < existingSchedule.getTotalSeats()) {
+            throw new HttpConflict("Không thể sửa lịch trình vì đã có vé được bán.");
+        }
+
+        Route route = routeRepository.findById(scheduleRequest.getRouteId())
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy tuyến đường với ID: " + scheduleRequest.getRouteId()));
+        Bus bus = busRepository.findById(scheduleRequest.getBusId())
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy xe bus với ID: " + scheduleRequest.getBusId()));
+
+        existingSchedule.setRoute(route);
+        existingSchedule.setBus(bus);
+        existingSchedule.setDepartureTime(scheduleRequest.getDepartureTime());
+        LocalDateTime arrivalTime = scheduleRequest.getDepartureTime().plusMinutes(route.getDuration());
+        existingSchedule.setArrivalTime(arrivalTime);
+        existingSchedule.setTotalSeats(bus.getCapacity());
+        existingSchedule.setAvailableSeats(bus.getCapacity());
+
+        return new ScheduleResponse(scheduleRepository.save(existingSchedule));
+    }
+
+    @Override
+    public void cancelSchedule(Long id) {
+        Schedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy lịch trình với ID: " + id));
+        if (schedule.getAvailableSeats() < schedule.getTotalSeats()) {
+            throw new HttpConflict("Không thể xóa lịch trình vì đã có vé được bán. Hãy chuyển sang trạng thái Hủy.");
+        }
+
+        schedule.setStatus(ScheduleStatus.CANCELLED);
+        scheduleRepository.save(schedule);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<ScheduleResponse> searchSchedules(
             Long departureStationId, Long arrivalStationId, String departureDate,
             Integer fromHour, Integer toHour, BigDecimal maxPrice, List<Long> companyIds, List<SeatType> seatTypes,
@@ -97,12 +138,14 @@ public class ScheduleServiceImpl implements IScheduleService {
         Specification<Schedule> spec = ScheduleSpecification.searchByCriteria(
                 departureStationId, arrivalStationId, startOfDay, endOfDay,
                 fromHour, toHour, maxPrice, companyIds, seatTypes);
+
         Page<Schedule> schedulePage = scheduleRepository.findAll(spec, pageable);
 
         return schedulePage.map(this::mapToScheduleResponse);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<ScheduleResponse> findSchedulesByCompany(Long companyId, String departureDate, Pageable pageable) {
         LocalDateTime start, end;
         if (departureDate != null && !departureDate.isEmpty()) {
@@ -118,8 +161,7 @@ public class ScheduleServiceImpl implements IScheduleService {
             end = start.plusHours(24);
         }
 
-        Page<Schedule> schedulePage = scheduleRepository.findSchedulesByCompany(companyId, start, end, pageable);
-
+        Page<Schedule> schedulePage = scheduleRepository.findByBus_Company_IdAndDepartureTimeBetween(companyId, start, end, pageable);
         return schedulePage.map(this::mapToScheduleResponse);
     }
 
@@ -143,14 +185,12 @@ public class ScheduleServiceImpl implements IScheduleService {
     private List<CalculatedCancellationMilestone> calculateMilestones(Schedule schedule) {
         List<CalculatedCancellationMilestone> milestones = new ArrayList<>();
 
-        // SỬA LỖI: Lấy các chính sách chung từ repository, không lấy từ Route
         List<CancellationPolicy> generalPolicies = cancellationPolicyRepository.findByRouteIsNull();
 
         if (generalPolicies == null || generalPolicies.isEmpty()) {
-            return milestones; // Trả về danh sách rỗng nếu không có chính sách nào được cấu hình
+            return milestones;
         }
 
-        // Sắp xếp các chính sách theo mốc thời gian từ cao đến thấp
         List<CancellationPolicy> sortedPolicies = generalPolicies.stream()
                 .sorted(Comparator.comparing(CancellationPolicy::getCancellationTimeLimit).reversed())
                 .toList();
@@ -173,7 +213,6 @@ public class ScheduleServiceImpl implements IScheduleService {
             previousDeadline = deadline;
         }
 
-        // Thêm mốc cuối cùng (từ mốc cuối cùng đến giờ khởi hành, phí 100%)
         if (previousDeadline != null) {
             CalculatedCancellationMilestone finalMilestone = new CalculatedCancellationMilestone();
             finalMilestone.setStartTime(previousDeadline);

@@ -10,4 +10,5 @@ public interface IRouteService {
     RouteResponse save(RouteRequest routeRequest);
     RouteResponse update(Long id, RouteRequest routeRequest);
     void delete(Long id);
+    List<RouteResponse> findPopular();
 }

@@ -16,11 +16,11 @@ import java.time.LocalDateTime;
 @Setter
 public class Schedule extends BaseObject {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "route_id", nullable = false)
     private Route route;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bus_id", nullable = false)
     private Bus bus;
 

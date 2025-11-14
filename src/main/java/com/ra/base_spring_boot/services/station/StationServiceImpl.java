@@ -74,6 +74,20 @@ public class StationServiceImpl implements IStationService {
     }
 
     @Override
+    public List<StationResponse> findPopular() {
+        return stationRepository.findByIsPopularTrue().stream()
+                .map(StationResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StationResponse> findTopDestinations() {
+        return stationRepository.findByIsTopDestinationTrue().stream()
+                .map(StationResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public StationResponse uploadImage(Long stationId, MultipartFile imageFile) {
         Station station = stationRepository.findById(stationId)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy bến xe với ID: " + stationId));

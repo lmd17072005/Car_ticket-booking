@@ -9,13 +9,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface IStationRepository extends JpaRepository<Station, Long>, PagingAndSortingRepository<Station, Long> {
 
-    // Tìm kiếm theo tên HOẶC vị trí (không phân biệt hoa thường)
+
     @Query("SELECT s FROM Station s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.location) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Station> searchByNameOrLocation(String keyword, Pageable pageable);
-
-    // Kiểm tra tên đã tồn tại chưa
     boolean existsByNameIgnoreCase(String name);
+    List<Station> findByIsPopularTrue();
+    List<Station> findByIsTopDestinationTrue();
 }

@@ -23,16 +23,16 @@ import java.time.LocalDateTime;
 @Setter
 public class Payment extends BaseObject {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_provider_id")
     private PaymentProvider paymentProvider;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToOne
-    @JoinColumn(name = "ticket_id", nullable = false, unique = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_id", unique = true)
     private Ticket ticket;
 
     @Enumerated(EnumType.STRING)
@@ -46,6 +46,12 @@ public class Payment extends BaseObject {
     @Column(name = "status", nullable = false)
     private PaymentStatus status = PaymentStatus.PENDING;
 
+    @Column(name = "order_info", columnDefinition = "TEXT")
+    private String orderInfo;
+
+    @Column(name = "transaction_code", unique = true)
+    private String transactionCode;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -53,4 +59,6 @@ public class Payment extends BaseObject {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+
 }

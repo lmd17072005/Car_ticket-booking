@@ -51,4 +51,10 @@ public class RouteController {
         return ResponseEntity.ok(ResponseWrapper.
                 <String>builder().status(HttpStatus.OK).data("Route deleted successfully").build());
     }
+
+    @GetMapping("/popular")
+    public ResponseEntity<ResponseWrapper<List<RouteResponse>>> getPopularRoutes() {
+        return ResponseEntity.ok(ResponseWrapper.
+                <List<RouteResponse>>builder().status(HttpStatus.OK).data(routeService.findPopular()).build());
+    }
 }

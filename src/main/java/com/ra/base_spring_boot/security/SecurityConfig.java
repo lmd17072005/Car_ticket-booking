@@ -1,6 +1,5 @@
 package com.ra.base_spring_boot.security;
 
-import com.ra.base_spring_boot.model.constants.RoleName;
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
 import com.ra.base_spring_boot.security.jwt.JwtTokenFilter;
@@ -23,6 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+import com.ra.base_spring_boot.model.constants.RoleName;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class SecurityConfig
                 .cors(cf -> cf.configurationSource(request ->
                 {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(List.of("http://localhost:5173")); // Phụ thuộc vào port client
+                    config.setAllowedOrigins(List.of("http://localhost:5173"));
                     config.setAllowedMethods(List.of("*"));
                     config.setAllowCredentials(true);
                     config.setAllowedHeaders(List.of("*"));
@@ -54,8 +55,22 @@ public class SecurityConfig
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         url -> url
+                                .requestMatchers(HttpMethod.POST, "/api/v1/schedules/test-public").permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers("/api/v1/auth/**").permitAll()
+                                .requestMatchers("/api/v1/internal/**").permitAll()
+                                .requestMatchers(
+                                        HttpMethod.POST,
+                                        "/api/v1/buses", "/api/v1/routes", "/api/v1/schedules", "/api/v1/stations"
+                                ).hasAuthority(RoleName.ROLE_ADMIN.toString())
+                                .requestMatchers(
+                                        HttpMethod.PUT,
+                                        "/api/v1/buses/**", "/api/v1/routes/**", "/api/v1/schedules/**", "/api/v1/stations/**"
+                                ).hasAuthority(RoleName.ROLE_ADMIN.toString())
+                                .requestMatchers(
+                                        HttpMethod.DELETE,
+                                        "/api/v1/buses/**", "/api/v1/routes/**", "/api/v1/schedules/**", "/api/v1/stations/**"
+                                ).hasAuthority(RoleName.ROLE_ADMIN.toString())
                                 .requestMatchers(HttpMethod.GET,
                                         "/api/v1/banners/**",
                                         "/api/v1/bus-companies/**",
@@ -63,10 +78,16 @@ public class SecurityConfig
                                         "/api/v1/buses/**",
                                         "/api/v1/routes/**",
                                         "/api/v1/schedules/**",
+                                        "/api/v1/reviews/**",
                                         "/api/v1/cancellation-policies/**"
                                 ).permitAll()
-                                .requestMatchers("/api/v1/user/**", "/api/v1/tickets/**", "/api/v1/reviews/**").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers("/api/v1/tickets/**").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers(HttpMethod.POST, "/api/v1/reviews").hasAuthority(RoleName.ROLE_USER.toString())
+                                .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/**").hasAnyAuthority(RoleName.ROLE_USER.toString(), RoleName.ROLE_ADMIN.toString())
                                 .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
+
+
                                 .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

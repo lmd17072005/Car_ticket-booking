@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 @Setter
 public class Seat extends BaseObject {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bus_id", nullable = false)
     private Bus bus;
 

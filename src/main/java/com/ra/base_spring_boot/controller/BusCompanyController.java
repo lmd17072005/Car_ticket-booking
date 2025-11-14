@@ -55,4 +55,12 @@ public class BusCompanyController {
                         .build()
         );
     }
+
+    @GetMapping("/popular")
+    public ResponseEntity<ResponseWrapper<List<BusCompanyResponse>>> getPopularCompanies() {
+        return ResponseEntity.ok(ResponseWrapper.<List<BusCompanyResponse>>builder()
+                .status(HttpStatus.OK)
+                .data(busCompanyService.findPopular())
+                .build());
+    }
 }

@@ -76,12 +76,7 @@ public class BusCompanyServiceImpl implements IBusCompanyService {
         busCompanyRepository.deleteById(id);
     }
 
-    @Override
-    public List<BusCompanyResponse> findPopular() {
-        return busCompanyRepository.findByIsPopularTrue().stream()
-                .map(BusCompanyResponse::new)
-                .collect(Collectors.toList());
-    }
+    
 
     private void mapRequestToEntity(BusCompany busCompany, BusCompanyRequest request) {
         busCompany.setCompanyName(request.getCompanyName());

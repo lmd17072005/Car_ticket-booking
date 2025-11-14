@@ -9,7 +9,9 @@ import com.ra.base_spring_boot.model.constants.TicketStatus;
 import java.util.List;
 
 public interface ITicketService {
-    TicketResponse bookTicket(TicketRequest ticketRequest);
+    String initiateBooking(TicketRequest ticketRequest);
+    TicketResponse finalizeTicketCreation(Long paymentId);
+
     void cancelTicket(Long ticketId, CancelTicketRequest cancelRequest);
     List<TicketResponse> getMyTickets(TicketStatus status);
     TicketResponse lookupTicket(TicketLookupRequest request);

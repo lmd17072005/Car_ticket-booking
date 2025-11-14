@@ -36,6 +36,9 @@ public class Route extends BaseObject {
     @Column(name = "distance")
     private Integer distance;
 
+    @Column(name = "is_popular", columnDefinition = "boolean default false")
+    private Boolean isPopular = false;
+
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

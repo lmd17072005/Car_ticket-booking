@@ -6,9 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 @Repository
 public interface IBusCompanyRepository extends JpaRepository<BusCompany, Long>, PagingAndSortingRepository<BusCompany, Long> {
     Page<BusCompany> findByCompanyNameContainingIgnoreCase(String name, Pageable pageable);
     boolean existsByCompanyNameIgnoreCase(String companyName);
+    List<BusCompany> findByIsPopularTrue();
 }

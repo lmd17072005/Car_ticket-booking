@@ -1,5 +1,8 @@
 package com.ra.base_spring_boot.services.ticket;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ra.base_spring_boot.dto.payment.CreateOrderRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketLookupRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketResponse;
@@ -10,16 +13,21 @@ import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Bus.Schedule;
 import com.ra.base_spring_boot.model.Bus.Seat;
 import com.ra.base_spring_boot.model.Bus.Ticket;
+import com.ra.base_spring_boot.model.constants.PaymentMethod;
+import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.model.constants.ScheduleStatus;
 import com.ra.base_spring_boot.model.constants.TicketStatus;
 import com.ra.base_spring_boot.model.payment.CancellationPolicy;
+import com.ra.base_spring_boot.model.payment.Payment;
 import com.ra.base_spring_boot.model.user.User;
 import com.ra.base_spring_boot.repository.IUserRepository;
 import com.ra.base_spring_boot.repository.bus.ISeatRepository;
 import com.ra.base_spring_boot.dto.ticket.CancelTicketRequest;
 import com.ra.base_spring_boot.repository.payment.ICancellationPolicyRepository;
+import com.ra.base_spring_boot.repository.payment.IPaymentRepository;
 import com.ra.base_spring_boot.repository.schedule.IScheduleRepository;
 import com.ra.base_spring_boot.repository.ticket.ITicketRepository;
+import com.ra.base_spring_boot.services.payment.IPaymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +39,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,28 +51,95 @@ public class TicketServiceImpl implements ITicketService {
     private final ISeatRepository seatRepository;
     private final IUserRepository userRepository;
     private final ICancellationPolicyRepository cancellationPolicyRepository;
+    private final IPaymentRepository paymentRepository;
+    private final IPaymentService paymentService;
 
     @Override
     @Transactional
-    public TicketResponse bookTicket(TicketRequest ticketRequest) {
+    public String initiateBooking(TicketRequest ticketRequest) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User currentUser = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new HttpNotFound("User not found"));
 
-        Schedule schedule = scheduleRepository.findById(ticketRequest.getScheduleId()).orElseThrow(() -> new HttpNotFound("Schedule not found with id : " + ticketRequest.getScheduleId()));
-        Seat seat = seatRepository.findById(ticketRequest.getSeatId()).orElseThrow(() -> new HttpNotFound("Seat not found with id : " + ticketRequest.getSeatId()));
+        Schedule schedule = scheduleRepository.findById(ticketRequest.getScheduleId()).orElseThrow(() -> new HttpNotFound("Schedule not found"));
+        Seat seat = seatRepository.findById(ticketRequest.getSeatId()).orElseThrow(() -> new HttpNotFound("Seat not found"));
 
-        if (schedule.getStatus() != ScheduleStatus.AVAILABLE) {
-            throw new HttpConflict("The trip is sold out or has been cancelled.");
+        if (schedule.getAvailableSeats() <= 0) { throw new HttpConflict("The trip is sold out."); }
+        if (ticketRepository.existsByScheduleIdAndSeatId(schedule.getId(), seat.getId())) { throw new HttpConflict("Seat is already booked."); }
+
+        BigDecimal finalPrice = schedule.getRoute().getPrice().add(seat.getPriceForSeatType());
+
+        if (ticketRequest.getPaymentMethod() == PaymentMethod.CASH) {
+            Ticket newTicket = new Ticket();
+            newTicket.setUser(currentUser);
+            newTicket.setSchedule(schedule);
+            newTicket.setSeat(seat);
+            newTicket.setDepartureTime(schedule.getDepartureTime());
+            newTicket.setArrivalTime(schedule.getArrivalTime());
+            newTicket.setSeatType(seat.getSeatType());
+            newTicket.setPrice(finalPrice);
+            newTicket.setStatus(TicketStatus.BOOKED);
+            Ticket savedTicket = ticketRepository.save(newTicket);
+
+            Payment cashPayment = new Payment();
+            cashPayment.setUser(currentUser);
+            cashPayment.setAmount(finalPrice);
+            cashPayment.setStatus(PaymentStatus.COMPLETED);
+            cashPayment.setPaymentMethod(PaymentMethod.CASH);
+            cashPayment.setTicket(savedTicket);
+            paymentRepository.save(cashPayment);
+
+            schedule.setAvailableSeats(schedule.getAvailableSeats() - 1);
+            if (schedule.getAvailableSeats() == 0) {
+                schedule.setStatus(ScheduleStatus.FULL);
+            }
+            scheduleRepository.save(schedule);
+
+            return "BOOKING_SUCCESS";
+
+        } else if (ticketRequest.getPaymentMethod() == PaymentMethod.ONLINE) {
+            String orderInfo = String.format("{\"scheduleId\": %d, \"seatId\": %d}", ticketRequest.getScheduleId(), ticketRequest.getSeatId());
+
+            Payment onlinePayment = new Payment();
+            onlinePayment.setUser(currentUser);
+            onlinePayment.setAmount(finalPrice);
+            onlinePayment.setStatus(PaymentStatus.PENDING);
+            onlinePayment.setPaymentMethod(PaymentMethod.ONLINE);
+            onlinePayment.setOrderInfo(orderInfo);
+            onlinePayment.setTicket(null); // Bắt buộc là null ở bước này
+            Payment savedPayment = paymentRepository.save(onlinePayment);
+
+            CreateOrderRequest orderRequest = new CreateOrderRequest();
+            orderRequest.setPaymentId(savedPayment.getId());
+            orderRequest.setAmount(finalPrice);
+            orderRequest.setDescription("Thanh toan ve xe " + savedPayment.getId());
+
+            return paymentService.createZaloPayOrder(orderRequest);
+        } else {
+            throw new HttpBadRequest("Phương thức thanh toán không hợp lệ.");
         }
-        if (schedule.getAvailableSeats() <= 0) {
-            throw new HttpConflict("The trip is sold out.");
+    }
+
+    @Override
+    @Transactional
+    public TicketResponse finalizeTicketCreation(Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new HttpNotFound("Payment not found"));
+
+        if (payment.getStatus() != PaymentStatus.COMPLETED) { throw new HttpBadRequest("Payment is not completed."); }
+        if (payment.getTicket() != null) { throw new HttpConflict("A ticket has already been created for this payment."); }
+
+        Long scheduleId, seatId;
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            Map<String, Long> orderData = objectMapper.readValue(payment.getOrderInfo(), new TypeReference<>() {});
+            scheduleId = orderData.get("scheduleId");
+            seatId = orderData.get("seatId");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse order info from payment: " + e.getMessage());
         }
-        if (!seat.getBus().getId().equals(schedule.getBus().getId())) {
-            throw new HttpBadRequest("Seat does not belong to the bus for this schedule.");
-        }
-        if (ticketRepository.existsByScheduleIdAndSeatId(schedule.getId(), seat.getId())) {
-            throw new HttpConflict("Seat is already booked for this schedule.");
-        }
+
+        Schedule schedule = scheduleRepository.findById(scheduleId).orElseThrow(() -> new HttpNotFound("Schedule not found"));
+        Seat seat = seatRepository.findById(seatId).orElseThrow(() -> new HttpNotFound("Seat not found"));
 
         schedule.setAvailableSeats(schedule.getAvailableSeats() - 1);
         if (schedule.getAvailableSeats() == 0) {
@@ -71,19 +147,21 @@ public class TicketServiceImpl implements ITicketService {
         }
         scheduleRepository.save(schedule);
 
-        BigDecimal finalPrice = schedule.getRoute().getPrice().add(seat.getPriceForSeatType());
-
         Ticket newTicket = new Ticket();
-        newTicket.setUser(currentUser);
+        newTicket.setUser(payment.getUser());
         newTicket.setSchedule(schedule);
         newTicket.setSeat(seat);
         newTicket.setDepartureTime(schedule.getDepartureTime());
         newTicket.setArrivalTime(schedule.getArrivalTime());
         newTicket.setSeatType(seat.getSeatType());
-        newTicket.setPrice(finalPrice);
+        newTicket.setPrice(payment.getAmount());
         newTicket.setStatus(TicketStatus.BOOKED);
+        Ticket savedTicket = ticketRepository.save(newTicket);
 
-        return new TicketResponse(ticketRepository.save(newTicket));
+        payment.setTicket(savedTicket);
+        paymentRepository.save(payment);
+
+        return new TicketResponse(savedTicket);
     }
 
     @Override
@@ -136,7 +214,6 @@ public class TicketServiceImpl implements ITicketService {
 
         if (refundPercentage > 0) {
             BigDecimal refundAmount = ticket.getPrice().multiply(BigDecimal.valueOf(refundPercentage / 100.0));
-            // TODO: Gọi đến Payment Service
             System.out.println("Yêu cầu hoàn tiền: " + refundAmount + " cho vé ID: " + ticket.getId());
         }
     }

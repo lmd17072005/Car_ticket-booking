@@ -1,17 +1,13 @@
 package com.ra.base_spring_boot.specification;
 
-import com.ra.base_spring_boot.model.Bus.Schedule;
-import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.jpa.domain.Specification;
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+
 
 import com.ra.base_spring_boot.model.Bus.Schedule;
+import com.ra.base_spring_boot.model.constants.ScheduleStatus;
 import com.ra.base_spring_boot.model.constants.SeatType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,7 +27,7 @@ public class ScheduleSpecification {
             predicates.add(cb.equal(root.get("route").get("departureStation").get("id"), departureStationId));
             predicates.add(cb.equal(root.get("route").get("arrivalStation").get("id"), arrivalStationId));
             predicates.add(cb.between(root.get("departureTime"), startOfDay, endOfDay));
-            predicates.add(cb.equal(root.get("status"), "AVAILABLE"));
+            predicates.add(cb.equal(root.get("status"), ScheduleStatus.AVAILABLE));
             predicates.add(cb.greaterThan(root.get("availableSeats"), 0));
 
             if (fromHour != null) {

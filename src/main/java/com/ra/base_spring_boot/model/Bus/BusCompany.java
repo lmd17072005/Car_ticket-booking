@@ -22,6 +22,9 @@ public class BusCompany extends BaseObject {
     @Column(name = "descriptions", columnDefinition = "TEXT")
     private String descriptions;
 
+    @Column(name = "is_popular", columnDefinition = "boolean default false")
+    private Boolean isPopular = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -54,6 +54,13 @@ public class RouteServiceImpl implements IRouteService {
         routeRepository.deleteById(id);
     }
 
+    @Override
+    public List<RouteResponse> findPopular() {
+        return routeRepository.findByIsPopularTrue().stream()
+                .map(RouteResponse::new)
+                .collect(Collectors.toList());
+    }
+
     private Route mapRequestToEntity(Route route, RouteRequest routeRequest) {
         if (routeRequest.getDepartureStationId().equals(routeRequest.getArrivalStationId())) {
             throw new HttpBadRequest("Điểm đi và điểm đến phải khác nhau");

@@ -13,6 +13,8 @@ public interface IScheduleService {
     List<ScheduleResponse> findAll();
     ScheduleResponse findById(Long id);
     ScheduleResponse save(ScheduleRequest scheduleRequest);
+    ScheduleResponse update(Long id, ScheduleRequest scheduleRequest);
+    void cancelSchedule(Long id);
 
     Page<ScheduleResponse> searchSchedules(
             Long departureStationId, Long arrivalStationId, String departureDate,

@@ -14,7 +14,7 @@ public class BusImage extends BaseObject {
     @Column(name = "image_url", nullable = false, length = 255)
     private String imageUrl;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bus_id", nullable = false)
     private Bus bus;
 }

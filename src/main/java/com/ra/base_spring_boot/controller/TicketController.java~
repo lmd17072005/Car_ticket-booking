@@ -23,17 +23,7 @@ public class TicketController {
 
     private final ITicketService ticketService;
 
-    @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<ResponseWrapper<String>> initiateBookingProcess(@Valid @RequestBody TicketRequest ticketRequest) {
-        String paymentUrl = ticketService.initiateBooking(ticketRequest);
-        return ResponseEntity.ok(
-                ResponseWrapper.<String>builder()
-                        .status(HttpStatus.OK)
-                        .data(paymentUrl)
-                        .build()
-        );
-    }
+    
 
     @GetMapping("/my-tickets")
     @PreAuthorize("hasAuthority('ROLE_USER')")

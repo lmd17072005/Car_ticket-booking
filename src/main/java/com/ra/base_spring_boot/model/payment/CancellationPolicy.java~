@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 public class CancellationPolicy extends BaseObject {
 @Column(name = "descriptions", nullable = false, columnDefinition = "TEXT")
 private String descriptions;
-@ManyToOne(fetch = FetchType.LAZY)
+@ManyToOne
 @JoinColumn(name = "route_id")
 private Route route;
 @Column(name = "cancellation_time_limit", nullable = false)

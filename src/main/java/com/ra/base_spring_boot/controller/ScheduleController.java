@@ -51,12 +51,14 @@ public class ScheduleController {
             @RequestParam(required = false) List<SeatType> seatTypes,
             @PageableDefault(page = 0, size = 10) Pageable pageable) {
 
+        List<SeatType> finalSeatTypes = (seatTypes != null && seatTypes.isEmpty()) ? null : seatTypes;
+
         return ResponseEntity.ok(
                 ResponseWrapper.<Page<ScheduleResponse>>builder()
                         .status(HttpStatus.OK)
                         .data(scheduleService.searchSchedules(
                                 departureStationId, arrivalStationId, departureDate,
-                                fromHour, toHour, maxPrice, companyIds, seatTypes,
+                                fromHour, toHour, maxPrice, companyIds,finalSeatTypes,
                                 pageable
                         ))
                         .build()
@@ -70,11 +72,44 @@ public class ScheduleController {
                 <ScheduleResponse>builder().status(HttpStatus.CREATED).data(scheduleService.save(scheduleRequest)).build(), HttpStatus.CREATED);
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<ScheduleResponse>> updateSchedule(
+            @PathVariable Long id,
+            @Valid @RequestBody ScheduleRequest scheduleRequest) {
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<ScheduleResponse>builder()
+                        .status(HttpStatus.OK)
+                        .data(scheduleService.update(id, scheduleRequest))
+                        .build()
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<String>> cancelSchedule(@PathVariable Long id) {
+        scheduleService.cancelSchedule(id);
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .data("Hủy lịch trình thành công.")
+                        .build()
+        );
+    }
+
     @GetMapping("/{id}/seats")
     public ResponseEntity<ResponseWrapper<List<ScheduleSeatResponse>>> getScheduleSeats(@PathVariable Long id) {
         return ResponseEntity.ok(ResponseWrapper.<List<ScheduleSeatResponse>>builder()
                 .status(HttpStatus.OK)
                 .data(seatService.getSeatStatusForSchedule(id))
                 .build());
+    }
+
+    @PostMapping("/test-public")
+    public ResponseEntity<String> testPublicPost(@RequestBody ScheduleRequest scheduleRequest) {
+        System.out.println("====== PUBLIC POST RECEIVED ======");
+        System.out.println("Route ID: " + scheduleRequest.getRouteId());
+        return ResponseEntity.ok("Public POST request received successfully!");
     }
 }

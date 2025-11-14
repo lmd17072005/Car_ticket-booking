@@ -11,7 +11,6 @@ public class BusCompanyRequest {
     @NotBlank(message = "Company name is required")
     private String companyName;
 
-    // URL ảnh có thể null, không bắt buộc
     private String image;
 
     private String descriptions;

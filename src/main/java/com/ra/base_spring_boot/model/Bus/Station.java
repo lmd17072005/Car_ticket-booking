@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 @Table(name = "stations")
 @Getter
 @Setter
-@NoArgsConstructor   // Cần thiết cho JPA và Builder
-@AllArgsConstructor  // Cần thiết cho Builder
-@Builder             // Annotation để tạo phương thức .builder()
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Station extends BaseObject {
 
     @Column(name = "name", nullable = false, length = 255)
@@ -30,6 +30,12 @@ public class Station extends BaseObject {
 
     @Column(name = "location", length = 255)
     private String location;
+
+    @Column(name = "is_popular", columnDefinition = "boolean default false")
+    private Boolean isPopular = false;
+
+    @Column(name = "is_top_destination", columnDefinition = "boolean default false")
+    private Boolean isTopDestination = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
