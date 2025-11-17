@@ -36,12 +36,4 @@ public class StationController {
                 .data(stationService.findPopular())
                 .build());
     }
-
-    @GetMapping("/top-destinations")
-    public ResponseEntity<ResponseWrapper<List<StationResponse>>> getTopDestinations() {
-        return ResponseEntity.ok(ResponseWrapper.<List<StationResponse>>builder()
-                .status(HttpStatus.OK)
-                .data(stationService.findTopDestinations())
-                .build());
-    }
 }

@@ -15,14 +15,17 @@ public class RouteResponse {
     private Long arrivalStationId;
     private String arrivalStationName;
     private BigDecimal price;
-    private Integer duration; // in minutes
-    private Integer distance; // in kilometers
+    private Integer duration;
+    private Integer distance;
+    private String imageUrl;
+
 
     public RouteResponse(Route route) {
         this.id = route.getId();
         this.price = route.getPrice();
         this.duration = route.getDuration();
         this.distance = route.getDistance();
+        this.imageUrl = route.getImageUrl();
         if (route.getDepartureStation() != null) {
             this.departureStationId = route.getDepartureStation().getId();
             this.departureStationName = route.getDepartureStation().getName();

@@ -7,9 +7,12 @@ import com.ra.base_spring_boot.services.route.IRouteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
@@ -50,6 +53,20 @@ public class RouteController {
         routeService.delete(id);
         return ResponseEntity.ok(ResponseWrapper.
                 <String>builder().status(HttpStatus.OK).data("Route deleted successfully").build());
+    }
+
+    @PostMapping(value = "/{id}/upload-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<ResponseWrapper<RouteResponse>> uploadImage(
+            @PathVariable("id") Long routeId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        return ResponseEntity.ok(
+                ResponseWrapper.<RouteResponse>builder()
+                        .status(HttpStatus.OK)
+                        .data(routeService.uploadImage(routeId, file))
+                        .build()
+        );
     }
 
     @GetMapping("/popular")

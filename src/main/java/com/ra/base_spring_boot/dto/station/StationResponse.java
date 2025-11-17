@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder // Thêm Builder để dễ tạo đối tượng
+@Builder
 public class StationResponse {
 
     private Long id;

@@ -5,10 +5,13 @@ import com.ra.base_spring_boot.dto.banner.BannerResponse;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.others.Banner;
 import com.ra.base_spring_boot.repository.banner.IBannerRepository;
+import com.ra.base_spring_boot.services.file.IFileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 public class BannerServiceImpl implements IBannerService {
 
     private final IBannerRepository bannerRepository;
+    private final IFileStorageService fileStorageService;
 
     @Override
     public List<BannerResponse> getPublicBanners() {
@@ -68,5 +72,17 @@ public class BannerServiceImpl implements IBannerService {
             throw new HttpNotFound("Banner not found with id: " + id);
         }
         bannerRepository.deleteById(id);
+    }
+
+    @Override
+    public BannerResponse uploadImage(Long bannerId, MultipartFile imageFile) {
+        Banner banner = bannerRepository.findById(bannerId)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy banner với ID: " + bannerId));
+
+        String imageUrl = fileStorageService.uploadFile(imageFile);
+        banner.setBannerUrl(imageUrl);
+
+        Banner savedBanner = bannerRepository.save(banner);
+        return new BannerResponse(savedBanner);
     }
 }

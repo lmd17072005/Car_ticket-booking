@@ -11,7 +11,7 @@ import java.util.List;
 public interface IStationService {
     List<StationResponse> getPublicStations();
     List<StationResponse> findPopular();
-    List<StationResponse> findTopDestinations();
+
 
     Page<StationResponse> findAll(Pageable pageable, String search);
     StationResponse findById(Long id);

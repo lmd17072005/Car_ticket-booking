@@ -4,6 +4,7 @@ import com.ra.base_spring_boot.dto.banner.BannerRequest;
 import com.ra.base_spring_boot.dto.banner.BannerResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,4 +17,6 @@ public interface IBannerService {
     BannerResponse save(BannerRequest request);
     BannerResponse update(Long id, BannerRequest request);
     void delete(Long id);
+    BannerResponse uploadImage(Long bannerId, MultipartFile imageFile);
+
 }

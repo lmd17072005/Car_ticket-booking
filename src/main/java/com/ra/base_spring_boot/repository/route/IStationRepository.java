@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -15,9 +16,10 @@ import java.util.List;
 public interface IStationRepository extends JpaRepository<Station, Long>, PagingAndSortingRepository<Station, Long> {
 
 
-    @Query("SELECT s FROM Station s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(s.location) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<Station> searchByNameOrLocation(String keyword, Pageable pageable);
+    @Query("SELECT s FROM Station s WHERE " +
+            "LOWER(s.name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(s.location) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<Station> searchByNameOrLocation(@Param("search") String search, Pageable pageable);
     boolean existsByNameIgnoreCase(String name);
     List<Station> findByIsPopularTrue();
-    List<Station> findByIsTopDestinationTrue();
 }

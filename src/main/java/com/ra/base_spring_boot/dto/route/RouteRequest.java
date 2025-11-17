@@ -21,6 +21,8 @@ public class RouteRequest {
     @Min(value = 0, message = "Price must be more than or equal to 0")
     private BigDecimal price;
 
+    private String imageUrl;
+
     private Integer duration;
     private Integer distance;
 }

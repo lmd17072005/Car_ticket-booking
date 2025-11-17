@@ -1,4 +1,4 @@
-package com.ra.base_spring_boot.model.Bus;
+package com.ra.base_spring_boot.model.others;
 
 import com.ra.base_spring_boot.model.base.BaseObject;
 import jakarta.persistence.*;
@@ -8,31 +8,34 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "stations")
+@Table(name = "destinations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Station extends BaseObject {
+public class Destination extends BaseObject {
 
     @Column(name = "name", nullable = false, length = 255)
     private String name;
 
-    @Column(name = "image", length = 255)
-    private String image;
-
-    @Column(name = "wallpaper", length = 255)
-    private String wallpaper;
-
-    @Column(name = "descriptions", columnDefinition = "longtext")
-    private String descriptions;
-
     @Column(name = "location", length = 255)
     private String location;
 
-    @Column(name = "is_popular", columnDefinition = "boolean default false")
-    private Boolean isPopular = false;
+    @Column(name = "image", length = 500)
+    private String image;
+
+    @Column(name = "wallpaper", length = 500)
+    private String wallpaper;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "review_count", columnDefinition = "int default 0")
+    private Integer reviewCount = 0;
+
+    @Column(name = "is_featured", columnDefinition = "boolean default false")
+    private Boolean isFeatured = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

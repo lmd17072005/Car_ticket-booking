@@ -8,8 +8,11 @@ import com.ra.base_spring_boot.model.Bus.Route;
 import com.ra.base_spring_boot.model.Bus.Station;
 import com.ra.base_spring_boot.repository.route.IStationRepository;
 import com.ra.base_spring_boot.repository.route.IRouteRepository;
+import com.ra.base_spring_boot.services.file.IFileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +21,7 @@ import java.util.stream.Collectors;
 public class RouteServiceImpl implements IRouteService {
     private final IRouteRepository routeRepository;
     private final IStationRepository stationRepository;
+    private final IFileStorageService fileStorageService;
 
 
     @Override
@@ -55,11 +59,24 @@ public class RouteServiceImpl implements IRouteService {
     }
 
     @Override
+    public RouteResponse uploadImage(Long routeId, MultipartFile imageFile) {
+        Route route = routeRepository.findById(routeId)
+                .orElseThrow(() -> new HttpNotFound("Không tìm thấy tuyến đường với ID: " + routeId));
+
+        String imageUrl = fileStorageService.uploadFile(imageFile);
+        route.setImageUrl(imageUrl);
+
+        Route savedRoute = routeRepository.save(route);
+        return new RouteResponse(savedRoute);
+    }
+
+    @Override
     public List<RouteResponse> findPopular() {
         return routeRepository.findByIsPopularTrue().stream()
                 .map(RouteResponse::new)
                 .collect(Collectors.toList());
     }
+
 
     private Route mapRequestToEntity(Route route, RouteRequest routeRequest) {
         if (routeRequest.getDepartureStationId().equals(routeRequest.getArrivalStationId())) {
