@@ -1,19 +1,20 @@
 package com.ra.base_spring_boot.services.payment;
 
+import com.ra.base_spring_boot.dto.payment.CreateOrderRequest;
 import com.ra.base_spring_boot.dto.payment.PaymentResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import com.ra.base_spring_boot.dto.payment.CreateOrderRequest;
-import com.ra.base_spring_boot.dto.payment.ZaloPayCallbackRequest;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.Map;
 
 
 public interface IPaymentService {
     Page<PaymentResponse> findAllForAdmin(Pageable pageable);
 
-    @Transactional
-    boolean handleZaloPayCallback(String jsonStr);
+    String createVnPayOrder(Long paymentId, BigDecimal amount, String description, HttpServletRequest request);
+    int handleVnPayIPN(Map<String, String> vnpayParams);
 
-    String createZaloPayOrder(CreateOrderRequest request);
 
 }

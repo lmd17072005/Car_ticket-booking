@@ -1,15 +1,10 @@
 package com.ra.base_spring_boot.controller;
 
-import com.ra.base_spring_boot.dto.payment.ZaloPayCallbackRequest;
 import com.ra.base_spring_boot.services.payment.IPaymentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @RestController
@@ -20,18 +15,20 @@ public class PaymentCallbackController {
 
     private final IPaymentService paymentService;
 
-    @PostMapping("/zalopay-callback")
-    public ResponseEntity<Map<String, Object>> handleZaloPayCallback(@RequestBody String jsonStr) {
-        log.info("Received ZaloPay callback data");
+    @GetMapping("/vnpay-ipn")
+    public ResponseEntity<String> handleVnPayIPN(@RequestParam Map<String, String> allParams) {
+        log.info("Received VNPAY IPN with params: {}", allParams);
+        int result = paymentService.handleVnPayIPN(allParams);
 
-        boolean isSuccess = paymentService.handleZaloPayCallback(jsonStr);
-
-        if (isSuccess) {
-            log.info("Callback processed successfully. Responding to ZaloPay with success code.");
-            return ResponseEntity.ok(Map.of("return_code", 1, "return_message", "success"));
+        // Trả về response cho VNPAY theo tài liệu
+        if (result == 0) {
+            return ResponseEntity.ok("{\"RspCode\":\"00\",\"Message\":\"Confirm Success\"}");
+        } else if (result == 1) {
+            return ResponseEntity.ok("{\"RspCode\":\"01\",\"Message\":\"Order not found\"}");
+        } else if (result == 2) {
+            return ResponseEntity.ok("{\"RspCode\":\"97\",\"Message\":\"Invalid Checksum\"}");
         } else {
-            log.warn("Callback processing failed. Responding to ZaloPay with error code.");
-            return ResponseEntity.ok(Map.of("return_code", -1, "return_message", "mac not equal or error"));
+            return ResponseEntity.ok("{\"RspCode\":\"99\",\"Message\":\"Unknown error\"}");
         }
     }
 }

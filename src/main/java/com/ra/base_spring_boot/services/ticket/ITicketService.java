@@ -5,11 +5,12 @@ import com.ra.base_spring_boot.dto.ticket.TicketLookupRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketResponse;
 import com.ra.base_spring_boot.model.constants.TicketStatus;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
 public interface ITicketService {
-    String initiateBooking(TicketRequest ticketRequest);
+    String initiateBooking(TicketRequest ticketRequest,  HttpServletRequest request);
     TicketResponse finalizeTicketCreation(Long paymentId);
 
     void cancelTicket(Long ticketId, CancelTicketRequest cancelRequest);

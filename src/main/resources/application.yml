@@ -31,12 +31,12 @@ cloudinary:
   api_key: 414185256892539
   api_secret: I04ZFI8sFODtDpoThybOQejd1uo
 
-zalopay:
-  app-id: 554
-  key1: 8NdU5pG5R2spGHGhyO99HN1OhD8IQJBn
-  key2: uUfsWgfLkRLzq6W2uNXTCxrfxs51auny
-  create-order-url: "https://sb-openapi.zalopay.vn/v2/create"
-  callback-url: "https://8cb3abc8d337.ngrok-free.app/api/v1/payments/zalopay-callback"
+vnpay:
+  tmn-code: "14ZGLC9Q"
+  hash-secret: "E82E76M9CI1UYH5OFWQY03L2JNNAGGMO"
+  payment-url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+  return-url: "http://localhost:5173/payment-result"
+  ipn-url: "https://https://b076a81a41e9.ngrok-free.app /api/v1/payments/vnpay-ipn"
 
 
 ---

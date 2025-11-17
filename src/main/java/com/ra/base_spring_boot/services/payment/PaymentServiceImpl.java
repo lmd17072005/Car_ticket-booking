@@ -1,36 +1,27 @@
 package com.ra.base_spring_boot.services.payment;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ra.base_spring_boot.client.BookingServiceClient;
-import com.ra.base_spring_boot.dto.payment.ZaloPayCallbackRequest;
-import com.ra.base_spring_boot.dto.payment.CreateOrderRequest;
+import com.ra.base_spring_boot.config.VnPayConfig;
 import com.ra.base_spring_boot.dto.payment.PaymentResponse;
-import com.ra.base_spring_boot.dto.payment.ZaloPayCreateOrderResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.constants.PaymentStatus;
 import com.ra.base_spring_boot.model.payment.Payment;
 import com.ra.base_spring_boot.repository.payment.IPaymentRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestClient;
-import java.util.HexFormat;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -39,131 +30,119 @@ public class PaymentServiceImpl implements IPaymentService {
 
     private final IPaymentRepository paymentRepository;
     private final BookingServiceClient bookingServiceClient;
-    private final RestClient restClient = RestClient.create();
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-
-    @Value("${zalopay.app-id}")
-    private String appId;
-    @Value("${zalopay.key1}")
-    private String key1;
-    @Value("${zalopay.create-order-url}")
-    private String createOrderUrl;
-    @Value("${zalopay.callback-url}")
-    private String callbackUrl;
-    @Value("${zalopay.key2}")
-    private String key2;
-
-    @Override
-    @Transactional
-    public boolean handleZaloPayCallback(String jsonStr) {
-        try {
-            ZaloPayCallbackRequest callbackRequest = objectMapper.readValue(jsonStr, ZaloPayCallbackRequest.class);
-            String mac = hmacSha256(key2, callbackRequest.getData());
-            if (!mac.equals(callbackRequest.getMac())) {
-                log.error("ZaloPay Callback: MAC authentication failed!");
-                return false;
-            }
-
-            Map<String, Object> data = objectMapper.readValue(callbackRequest.getData(), new TypeReference<Map<String, Object>>() {});
-            String appTransId = (String) data.get("app_trans_id");
-            log.info("ZaloPay Callback received for app_trans_id: {}", appTransId);
-
-            Payment payment = paymentRepository.findByTransactionCode(appTransId)
-                    .orElseThrow(() -> new HttpNotFound("Payment not found with transaction code: " + appTransId));
-
-            if (payment.getStatus() == PaymentStatus.PENDING) {
-                payment.setStatus(PaymentStatus.COMPLETED);
-                paymentRepository.save(payment);
-                log.info("Updated Payment ID: {} to COMPLETED.", payment.getId());
-
-                try {
-                    bookingServiceClient.finalizeTicketCreation(payment.getId());
-                    log.info("Successfully called finalizeTicketCreation for Booking Service.");
-                } catch (Exception e) {
-                    log.error("Error calling finalizeTicketCreation for paymentId {}: {}", payment.getId(), e.getMessage());
-                }
-            } else {
-                log.warn("Payment ID {} already has status {}, skipping callback processing.", payment.getId(), payment.getStatus());
-            }
-            return true;
-        } catch (Exception e) {
-            log.error("Error handling ZaloPay callback: {}", e.getMessage(), e);
-            return false;
-        }
-    }
-
-
-
-    @Override
-    public String createZaloPayOrder(CreateOrderRequest request) {
-        Payment payment = paymentRepository.findById(request.getPaymentId())
-                .orElseThrow(() -> new HttpNotFound("Payment not found with id: " + request.getPaymentId()));
-
-        try {
-            long appTime = System.currentTimeMillis();
-            String appTransId = new SimpleDateFormat("yyMMdd").format(new Date()) + "_" +
-                    UUID.randomUUID().toString().substring(0,8);
-            String appUser = payment.getUser().getId().toString();
-            String embedData = "{}";
-            String item = "[]";
-
-            String data = appId + "|" + appTransId + "|" + appUser + "|" + request.getAmount().longValue()
-                    + "|" + appTime + "|" + embedData + "|" + item;
-
-            String mac = hmacSha256(key1, data);
-
-            MultiValueMap<String, String> orderParams = new LinkedMultiValueMap<>();
-            orderParams.add("app_id", appId);
-            orderParams.add("app_user", appUser);
-            orderParams.add("app_trans_id", appTransId);
-            orderParams.add("app_time", String.valueOf(appTime));
-            orderParams.add("amount", String.valueOf(request.getAmount().longValue()));
-            orderParams.add("description", request.getDescription());
-            orderParams.add("bank_code", "");
-            orderParams.add("item", item);
-            orderParams.add("embed_data", embedData);
-            orderParams.add("callback_url", callbackUrl);
-            orderParams.add("mac", mac);
-
-            ZaloPayCreateOrderResponse zaloPayResponse = restClient.post()
-                    .uri(createOrderUrl)
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                    .body(orderParams)
-                    .retrieve()
-                    .body(ZaloPayCreateOrderResponse.class);
-
-            if (zaloPayResponse == null || zaloPayResponse.getReturnCode() != 1) {
-                throw new HttpBadRequest("Failed to create ZaloPay order" +
-                        (zaloPayResponse != null ? zaloPayResponse.getReturnMessage() : "Response is null"));
-            }
-
-            payment.setTransactionCode(appTransId);
-            paymentRepository.save(payment);
-
-            return zaloPayResponse.getOrderUrl();
-        } catch (Exception e) {
-            log.error("Exception creating zaloPay order {}", e.getMessage());
-            throw new RuntimeException("Exception creating zaloPay order", e);
-        }
-    }
-
-
-
-    private String hmacSha256(String key, String data) {
-        try {
-            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secret_key = new SecretKeySpec(key.getBytes("UTF-8"), "HmacSHA256");
-            sha256_HMAC.init(secret_key);
-            byte [] hash = sha256_HMAC.doFinal(data.getBytes("UTF-8"));
-            return HexFormat.of().formatHex(hash);
-        } catch (Exception e) {
-            throw new  IllegalStateException("Failed to generate HMAC_SHA256 signature", e);
-        }
-    }
+    @Value("${vnpay.tmn-code}") private String tmnCode;
+    @Value("${vnpay.hash-secret}") private String hashSecret;
+    @Value("${vnpay.payment-url}") private String paymentUrl;
+    @Value("${vnpay.return-url}") private String returnUrl;
 
     @Override
     public Page<PaymentResponse> findAllForAdmin(Pageable pageable) {
         return paymentRepository.findAll(pageable).map(PaymentResponse::new);
     }
+
+    @Override
+    public String createVnPayOrder(Long paymentId, BigDecimal amount, String description, HttpServletRequest request) {
+        // 1. Lấy thông tin Payment từ DB
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new HttpNotFound("Payment not found with id: " + paymentId));
+
+        // 2. Tạo các tham số theo tài liệu VNPAY
+        String vnp_TxnRef = String.valueOf(paymentId); // Dùng ID của Payment làm mã giao dịch
+        long amountInVND = amount.multiply(new BigDecimal("100")).longValue();
+        String vnp_IpAddr = VnPayConfig.getIpAddress(request);
+
+        Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        String vnp_CreateDate = formatter.format(cld.getTime());
+
+        // 3. Build Map các tham số
+        Map<String, String> vnp_Params = new HashMap<>();
+        vnp_Params.put("vnp_Version", "2.1.0");
+        vnp_Params.put("vnp_Command", "pay");
+        vnp_Params.put("vnp_TmnCode", tmnCode);
+        vnp_Params.put("vnp_Amount", String.valueOf(amountInVND));
+        vnp_Params.put("vnp_CurrCode", "VND");
+        vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
+        vnp_Params.put("vnp_OrderInfo", description);
+        vnp_Params.put("vnp_OrderType", "other");
+        vnp_Params.put("vnp_Locale", "vn");
+        vnp_Params.put("vnp_ReturnUrl", returnUrl);
+        vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
+        vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
+
+        // 4. Tạo chữ ký
+        String hashData = VnPayConfig.hashAllFields(vnp_Params, hashSecret);
+        vnp_Params.put("vnp_SecureHash", hashData);
+
+        // 5. Build URL chuyển hướng
+        StringJoiner queryUrl = new StringJoiner("&");
+        vnp_Params.forEach((key, value) -> {
+            queryUrl.add(URLEncoder.encode(key, StandardCharsets.US_ASCII) + "=" + URLEncoder.encode(value, StandardCharsets.US_ASCII));
+        });
+
+        // 6. Cập nhật mã giao dịch cho Payment (quan trọng cho IPN)
+        payment.setTransactionCode(vnp_TxnRef);
+        paymentRepository.save(payment);
+
+        return paymentUrl + "?" + queryUrl.toString();
+    }
+
+    @Override
+    @Transactional
+    public int handleVnPayIPN(Map<String, String> vnpayParams) {
+        try {
+            // 1. Lấy các tham số cần thiết
+            String vnp_TxnRef = vnpayParams.get("vnp_TxnRef");
+            String vnp_ResponseCode = vnpayParams.get("vnp_ResponseCode");
+            String vnp_SecureHash = vnpayParams.get("vnp_SecureHash");
+
+            // 2. Xóa hash và hash type ra khỏi map để xác thực
+            vnpayParams.remove("vnp_SecureHashType");
+            vnpayParams.remove("vnp_SecureHash");
+
+            // 3. Xác thực chữ ký
+            String calculatedHash = VnPayConfig.hashAllFields(vnpayParams, hashSecret);
+            if (!calculatedHash.equals(vnp_SecureHash)) {
+                log.error("VNPAY IPN: Checksum failed!");
+                return 2; // Invalid signature
+            }
+
+            // 4. Tìm Payment trong DB
+            Payment payment = paymentRepository.findByTransactionCode(vnp_TxnRef)
+                    .orElse(null);
+            if (payment == null) {
+                log.error("VNPAY IPN: Order not found with id {}", vnp_TxnRef);
+                return 1; // Order not found
+            }
+
+            // 5. Kiểm tra trạng thái Payment
+            if (payment.getStatus() == PaymentStatus.COMPLETED || payment.getStatus() == PaymentStatus.FAILED) {
+                log.warn("VNPAY IPN: Order already updated. Status: {}", payment.getStatus());
+                return 0; // Already confirmed
+            }
+
+            // 6. Kiểm tra mã giao dịch VNPAY
+            if ("00".equals(vnp_ResponseCode)) {
+                // Giao dịch thành công
+                payment.setStatus(PaymentStatus.COMPLETED);
+                log.info("Updated Payment ID: {} to COMPLETED.", payment.getId());
+
+                // Gọi ngược lại Booking Service để hoàn tất tạo vé
+                bookingServiceClient.finalizeTicketCreation(payment.getId());
+            } else {
+                // Giao dịch thất bại
+                payment.setStatus(PaymentStatus.FAILED);
+                log.warn("Updated Payment ID: {} to FAILED. ResponseCode: {}", payment.getId(), vnp_ResponseCode);
+            }
+
+            paymentRepository.save(payment);
+            return 0; // Success
+
+        } catch (Exception e) {
+            log.error("Error handling VNPAY IPN: {}", e.getMessage());
+            return 99; // Unknown error
+        }
+    }
+
 }

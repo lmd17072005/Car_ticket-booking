@@ -28,6 +28,7 @@ import com.ra.base_spring_boot.repository.payment.IPaymentRepository;
 import com.ra.base_spring_boot.repository.schedule.IScheduleRepository;
 import com.ra.base_spring_boot.repository.ticket.ITicketRepository;
 import com.ra.base_spring_boot.services.payment.IPaymentService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -56,10 +57,9 @@ public class TicketServiceImpl implements ITicketService {
 
     @Override
     @Transactional
-    public String initiateBooking(TicketRequest ticketRequest) {
+    public String initiateBooking(TicketRequest ticketRequest, HttpServletRequest request) {
         UserDetails userDetails = (UserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         User currentUser = userRepository.findByEmail(userDetails.getUsername()).orElseThrow(() -> new HttpNotFound("User not found"));
-
         Schedule schedule = scheduleRepository.findById(ticketRequest.getScheduleId()).orElseThrow(() -> new HttpNotFound("Schedule not found"));
         Seat seat = seatRepository.findById(ticketRequest.getSeatId()).orElseThrow(() -> new HttpNotFound("Seat not found"));
 
@@ -67,57 +67,21 @@ public class TicketServiceImpl implements ITicketService {
         if (ticketRepository.existsByScheduleIdAndSeatId(schedule.getId(), seat.getId())) { throw new HttpConflict("Seat is already booked."); }
 
         BigDecimal finalPrice = schedule.getRoute().getPrice().add(seat.getPriceForSeatType());
+        String orderInfo = String.format("{\"scheduleId\": %d, \"seatId\": %d}", ticketRequest.getScheduleId(), ticketRequest.getSeatId());
 
-        if (ticketRequest.getPaymentMethod() == PaymentMethod.CASH) {
-            Ticket newTicket = new Ticket();
-            newTicket.setUser(currentUser);
-            newTicket.setSchedule(schedule);
-            newTicket.setSeat(seat);
-            newTicket.setDepartureTime(schedule.getDepartureTime());
-            newTicket.setArrivalTime(schedule.getArrivalTime());
-            newTicket.setSeatType(seat.getSeatType());
-            newTicket.setPrice(finalPrice);
-            newTicket.setStatus(TicketStatus.BOOKED);
-            Ticket savedTicket = ticketRepository.save(newTicket);
+        Payment newPayment = new Payment();
+        newPayment.setUser(currentUser);
+        newPayment.setAmount(finalPrice);
+        newPayment.setStatus(PaymentStatus.PENDING);
+        newPayment.setOrderInfo(orderInfo);
+        newPayment.setPaymentMethod(PaymentMethod.ONLINE);
+        newPayment.setTicket(null);
+        Payment savedPayment = paymentRepository.save(newPayment);
 
-            Payment cashPayment = new Payment();
-            cashPayment.setUser(currentUser);
-            cashPayment.setAmount(finalPrice);
-            cashPayment.setStatus(PaymentStatus.COMPLETED);
-            cashPayment.setPaymentMethod(PaymentMethod.CASH);
-            cashPayment.setTicket(savedTicket);
-            paymentRepository.save(cashPayment);
-
-            schedule.setAvailableSeats(schedule.getAvailableSeats() - 1);
-            if (schedule.getAvailableSeats() == 0) {
-                schedule.setStatus(ScheduleStatus.FULL);
-            }
-            scheduleRepository.save(schedule);
-
-            return "BOOKING_SUCCESS";
-
-        } else if (ticketRequest.getPaymentMethod() == PaymentMethod.ONLINE) {
-            String orderInfo = String.format("{\"scheduleId\": %d, \"seatId\": %d}", ticketRequest.getScheduleId(), ticketRequest.getSeatId());
-
-            Payment onlinePayment = new Payment();
-            onlinePayment.setUser(currentUser);
-            onlinePayment.setAmount(finalPrice);
-            onlinePayment.setStatus(PaymentStatus.PENDING);
-            onlinePayment.setPaymentMethod(PaymentMethod.ONLINE);
-            onlinePayment.setOrderInfo(orderInfo);
-            onlinePayment.setTicket(null); // Bắt buộc là null ở bước này
-            Payment savedPayment = paymentRepository.save(onlinePayment);
-
-            CreateOrderRequest orderRequest = new CreateOrderRequest();
-            orderRequest.setPaymentId(savedPayment.getId());
-            orderRequest.setAmount(finalPrice);
-            orderRequest.setDescription("Thanh toan ve xe " + savedPayment.getId());
-
-            return paymentService.createZaloPayOrder(orderRequest);
-        } else {
-            throw new HttpBadRequest("Phương thức thanh toán không hợp lệ.");
-        }
+        String description = "Thanh toan ve xe cho " + currentUser.getEmail();
+        return paymentService.createVnPayOrder(savedPayment.getId(), finalPrice, description, request);
     }
+
 
     @Override
     @Transactional

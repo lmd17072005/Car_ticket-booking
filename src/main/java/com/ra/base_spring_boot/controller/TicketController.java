@@ -7,6 +7,7 @@ import com.ra.base_spring_boot.dto.ticket.TicketRequest;
 import com.ra.base_spring_boot.dto.ticket.TicketResponse;
 import com.ra.base_spring_boot.model.constants.TicketStatus;
 import com.ra.base_spring_boot.services.ticket.ITicketService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,11 @@ public class TicketController {
 
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_USER')")
-    public ResponseEntity<ResponseWrapper<String>> initiateBookingProcess(@Valid @RequestBody TicketRequest ticketRequest) {
-        String paymentUrl = ticketService.initiateBooking(ticketRequest);
+    public ResponseEntity<ResponseWrapper<String>> initiateBookingProcess(
+            @Valid @RequestBody TicketRequest ticketRequest,
+            HttpServletRequest request) { // Thêm HttpServletRequest
+
+        String paymentUrl = ticketService.initiateBooking(ticketRequest, request);
         return ResponseEntity.ok(
                 ResponseWrapper.<String>builder()
                         .status(HttpStatus.OK)
