@@ -16,6 +16,7 @@ public class DestinationResponse {
     private String wallpaper;
     private String description;
     private Integer reviewCount;
+    private Boolean isFeatured;
 
     public static DestinationResponse fromEntity(Destination destination) {
         return DestinationResponse.builder()
@@ -26,6 +27,7 @@ public class DestinationResponse {
                 .wallpaper(destination.getWallpaper())
                 .description(destination.getDescription())
                 .reviewCount(destination.getReviewCount())
+                .isFeatured(destination.getIsFeatured())
                 .build();
     }
 }

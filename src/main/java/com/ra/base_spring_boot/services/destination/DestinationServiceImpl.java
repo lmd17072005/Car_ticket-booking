@@ -102,9 +102,17 @@ public class DestinationServiceImpl implements IDestinationService {
         destination.setImage(request.getImage());
         destination.setWallpaper(request.getWallpaper());
         destination.setDescription(request.getDescription());
+
         if (request.getReviewCount() != null) {
             destination.setReviewCount(request.getReviewCount());
         }
+
+        if (request.getIsFeatured() != null) {
+            destination.setIsFeatured(request.getIsFeatured());
+        } else {
+            destination.setIsFeatured(false);
+        }
+
         return destination;
     }
 }

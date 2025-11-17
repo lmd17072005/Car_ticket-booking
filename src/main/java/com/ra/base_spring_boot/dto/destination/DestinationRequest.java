@@ -27,4 +27,6 @@ public class DestinationRequest {
 
     @Min(value = 0, message = "Số bài viết phải >= 0")
     private Integer reviewCount;
+
+    private Boolean isFeatured;
 }
