@@ -105,11 +105,4 @@ public class ScheduleController {
                 .data(seatService.getSeatStatusForSchedule(id))
                 .build());
     }
-
-    @PostMapping("/test-public")
-    public ResponseEntity<String> testPublicPost(@RequestBody ScheduleRequest scheduleRequest) {
-        System.out.println("====== PUBLIC POST RECEIVED ======");
-        System.out.println("Route ID: " + scheduleRequest.getRouteId());
-        return ResponseEntity.ok("Public POST request received successfully!");
-    }
 }

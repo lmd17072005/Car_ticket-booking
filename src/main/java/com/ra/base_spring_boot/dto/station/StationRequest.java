@@ -17,4 +17,6 @@ public class StationRequest {
 
     @NotBlank(message = "Station location is required")
     private String location;
+
+    private Boolean isPopular = false;
 }

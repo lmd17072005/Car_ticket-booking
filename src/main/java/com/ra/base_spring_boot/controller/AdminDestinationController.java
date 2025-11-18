@@ -24,7 +24,6 @@ public class AdminDestinationController {
 
     private final IDestinationService destinationService;
 
-    // Lấy tất cả destinations (có phân trang)
     @GetMapping
     public ResponseEntity<ResponseWrapper<Page<DestinationResponse>>> findAll(
             @PageableDefault(page = 0, size = 10, sort = "id") Pageable pageable,
@@ -38,7 +37,6 @@ public class AdminDestinationController {
         );
     }
 
-    // Lấy destination theo ID
     @GetMapping("/{id}")
     public ResponseEntity<ResponseWrapper<DestinationResponse>> findById(@PathVariable Long id) {
         return ResponseEntity.ok(
@@ -62,7 +60,6 @@ public class AdminDestinationController {
         );
     }
 
-    // Cập nhật destination
     @PutMapping("/{id}")
     public ResponseEntity<ResponseWrapper<DestinationResponse>> update(
             @PathVariable Long id,
@@ -75,7 +72,6 @@ public class AdminDestinationController {
         );
     }
 
-    // Xóa destination
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseWrapper<String>> delete(@PathVariable Long id) {
         destinationService.delete(id);

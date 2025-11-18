@@ -80,15 +80,14 @@ public class SecurityConfig
                                         "/api/v1/routes/**",
                                         "/api/v1/schedules/**",
                                         "/api/v1/reviews/**",
-                                        "/api/v1/cancellation-policies/**"
+                                        "/api/v1/cancellation-policies/**",
+                                        "/api/v1/destinations/**"
                                 ).permitAll()
                                 .requestMatchers("/api/v1/user/**").hasAuthority(RoleName.ROLE_USER.toString())
                                 .requestMatchers("/api/v1/tickets/**").hasAuthority(RoleName.ROLE_USER.toString())
                                 .requestMatchers(HttpMethod.POST, "/api/v1/reviews").hasAuthority(RoleName.ROLE_USER.toString())
                                 .requestMatchers(HttpMethod.DELETE, "/api/v1/reviews/**").hasAnyAuthority(RoleName.ROLE_USER.toString(), RoleName.ROLE_ADMIN.toString())
                                 .requestMatchers("/api/v1/admin/**").hasAuthority(RoleName.ROLE_ADMIN.toString())
-
-
                                 .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

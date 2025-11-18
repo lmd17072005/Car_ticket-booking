@@ -14,4 +14,6 @@ public class BusCompanyRequest {
     private String image;
 
     private String descriptions;
+
+    private Boolean isPopular = false;
 }

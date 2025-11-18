@@ -87,6 +87,7 @@ public class BusCompanyServiceImpl implements IBusCompanyService {
         busCompany.setCompanyName(request.getCompanyName());
         busCompany.setImage(request.getImage());
         busCompany.setDescriptions(request.getDescriptions());
+        busCompany.setIsPopular(request.getIsPopular() != null ? request.getIsPopular() : false);
     }
 
     @Override

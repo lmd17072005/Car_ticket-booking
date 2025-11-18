@@ -25,4 +25,5 @@ public class RouteRequest {
 
     private Integer duration;
     private Integer distance;
+    private Boolean isPopular = false;
 }

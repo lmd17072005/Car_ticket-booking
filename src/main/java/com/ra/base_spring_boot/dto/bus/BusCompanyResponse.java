@@ -13,6 +13,7 @@ public class BusCompanyResponse {
     private String companyName;
     private String image;
     private String descriptions;
+    private Boolean isPopular;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -21,6 +22,7 @@ public class BusCompanyResponse {
         this.companyName = busCompany.getCompanyName();
         this.image = busCompany.getImage();
         this.descriptions = busCompany.getDescriptions();
+        this.isPopular = busCompany.getIsPopular();
         this.createdAt = busCompany.getCreatedAt();
         this.updatedAt = busCompany.getUpdatedAt();
     }

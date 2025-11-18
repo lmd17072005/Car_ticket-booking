@@ -1,6 +1,13 @@
 spring:
   application:
     name: base_spring_boot
+
+  servlet:
+    multipart:
+      max-file-size: 10MB        # Kích thước tối đa 1 file
+      max-request-size: 20MB     # Kích thước tối đa request
+      enabled: true
+
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/TicketBooking?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
     username: root

@@ -112,6 +112,7 @@ public class StationServiceImpl implements IStationService {
         station.setWallpaper(request.getWallpaper());
         station.setDescriptions(request.getDescriptions());
         station.setLocation(request.getLocation());
+        station.setIsPopular(request.getIsPopular() != null ? request.getIsPopular() : false);
         return station;
     }
 }

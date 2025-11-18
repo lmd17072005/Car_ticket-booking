@@ -22,6 +22,7 @@ public class StationResponse {
     private String descriptions;
     private String image;
     private String wallpaper;
+    private Boolean isPopular;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -33,6 +34,7 @@ public class StationResponse {
                 .descriptions(station.getDescriptions())
                 .image(station.getImage())
                 .wallpaper(station.getWallpaper())
+                .isPopular(station.getIsPopular())
                 .createdAt(station.getCreatedAt())
                 .updatedAt(station.getUpdatedAt())
                 .build();

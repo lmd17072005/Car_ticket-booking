@@ -17,8 +17,8 @@ public class RouteResponse {
     private BigDecimal price;
     private Integer duration;
     private Integer distance;
+    private Boolean isPopular;
     private String imageUrl;
-
 
     public RouteResponse(Route route) {
         this.id = route.getId();
@@ -26,6 +26,7 @@ public class RouteResponse {
         this.duration = route.getDuration();
         this.distance = route.getDistance();
         this.imageUrl = route.getImageUrl();
+        this.isPopular = route.getIsPopular();
         if (route.getDepartureStation() != null) {
             this.departureStationId = route.getDepartureStation().getId();
             this.departureStationName = route.getDepartureStation().getName();

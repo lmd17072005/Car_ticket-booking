@@ -112,7 +112,6 @@ public class DestinationServiceImpl implements IDestinationService {
         } else {
             destination.setIsFeatured(false);
         }
-
         return destination;
     }
 }
