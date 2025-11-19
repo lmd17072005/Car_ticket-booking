@@ -93,12 +93,10 @@ public class RouteServiceImpl implements IRouteService {
         route.setPrice(routeRequest.getPrice());
         route.setDuration(routeRequest.getDuration());
         route.setDistance(routeRequest.getDistance());
-        route.setIsPopular(routeRequest.getIsPopular());
+        route.setIsPopular(routeRequest.getIsPopular() != null ? routeRequest.getIsPopular() : false);
         if (routeRequest.getImageUrl() != null) {
             route.setImageUrl(routeRequest.getImageUrl());
         }
-
-
         return route;
     }
 }

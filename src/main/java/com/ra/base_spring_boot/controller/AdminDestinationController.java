@@ -47,7 +47,6 @@ public class AdminDestinationController {
         );
     }
 
-    // Tạo destination mới
     @PostMapping
     public ResponseEntity<ResponseWrapper<DestinationResponse>> create(
             @Valid @RequestBody DestinationRequest request) {

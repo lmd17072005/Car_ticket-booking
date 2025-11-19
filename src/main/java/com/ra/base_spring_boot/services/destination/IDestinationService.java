@@ -10,6 +10,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface IDestinationService {
+    List<DestinationResponse> findAll();
+
     List<DestinationResponse> getFeaturedDestinations();
 
     Page<DestinationResponse> findAll(Pageable pageable, String search);

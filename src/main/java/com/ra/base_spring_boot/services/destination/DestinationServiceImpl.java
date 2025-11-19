@@ -23,6 +23,13 @@ public class DestinationServiceImpl implements IDestinationService {
     private final IFileStorageService fileStorageService;
 
     @Override
+    public List<DestinationResponse> findAll() {
+        return destinationRepository.findAll().stream()
+                .map(DestinationResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<DestinationResponse> getFeaturedDestinations() {
         return destinationRepository.findByIsFeaturedTrue().stream()
                 .map(DestinationResponse::fromEntity)

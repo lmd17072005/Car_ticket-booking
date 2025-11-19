@@ -42,8 +42,9 @@ vnpay:
   tmn-code: "14ZGLC9Q"
   hash-secret: "E82E76M9CI1UYH5OFWQY03L2JNNAGGMO"
   payment-url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-  return-url: "http://localhost:5173/payment-result"
-  ipn-url: "https://https://b076a81a41e9.ngrok-free.app /api/v1/payments/vnpay-ipn"
+  return-url: http://localhost:8082/api/v1/payments/vnpay-return
+  ipn-url: "https://5af19e83da0c.ngrok-free.app/api/v1/payments/vnpay-ipn"
+  api-url: "https://sandbox.vnpayment.vn/merchantv2/"
 
 
 ---
