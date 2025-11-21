@@ -43,7 +43,7 @@ vnpay:
   hash-secret: "E82E76M9CI1UYH5OFWQY03L2JNNAGGMO"
   payment-url: "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
   return-url: http://localhost:8082/api/v1/payments/vnpay-return
-  ipn-url: "https://5af19e83da0c.ngrok-free.app/api/v1/payments/vnpay-ipn"
+  ipn-url: "https://c4d0d0eb0c02.ngrok-free.app/api/v1/payments/vnpay-ipn"
   api-url: "https://sandbox.vnpayment.vn/merchantv2/"
 
 
@@ -63,3 +63,23 @@ spring:
       on-profile: payment
 server:
   port: 8082
+
+springdoc:
+    api-docs:
+      path: /v3/api-docs
+      enabled: true
+    swagger-ui:
+      path: /swagger-ui.html
+      enabled: true
+      operationsSorter: alpha
+      tagsSorter: alpha
+      docExpansion: none
+      displayRequestDuration: true
+      defaultModelsExpandDepth: 1
+      defaultModelExpandDepth: 1
+      filter: true
+      tryItOutEnabled: true
+      persistAuthorization: true
+
+
+

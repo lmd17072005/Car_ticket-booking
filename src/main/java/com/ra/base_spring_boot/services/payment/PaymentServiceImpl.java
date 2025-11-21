@@ -21,14 +21,7 @@ import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/**
- * Payment Service Implementation
- * Handles VNPay payment integration
- *
- * @author lmd17072005
- * @version 1.0
- * @since 2025-11-19
- */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j

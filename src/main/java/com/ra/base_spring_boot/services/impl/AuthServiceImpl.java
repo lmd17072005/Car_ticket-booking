@@ -21,6 +21,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.ra.base_spring_boot.services.email.IEmailService;
+import com.ra.base_spring_boot.model.user.PasswordResetToken;
+import com.ra.base_spring_boot.repository.user.IPasswordResetTokenRepository;
 import com.ra.base_spring_boot.exception.HttpConflict;
 
 import java.util.HashSet;
@@ -36,6 +39,7 @@ public class AuthServiceImpl implements IAuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtProvider jwtProvider;
+
 
     @Override
     public void register(FormRegister formRegister) {
@@ -77,4 +81,6 @@ public class AuthServiceImpl implements IAuthService {
                         .collect(Collectors.toSet()))
                 .build();
     }
+
+
 }
