@@ -1,4 +1,4 @@
-package com.ra.base_spring_boot.repository.user;
+package com.ra.base_spring_boot.repository;
 
 import com.ra.base_spring_boot.model.user.PasswordResetToken;
 import com.ra.base_spring_boot.model.user.User;
@@ -9,6 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface IPasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
+
     Optional<PasswordResetToken> findByToken(String token);
+
     Optional<PasswordResetToken> findByUser(User user);
 }

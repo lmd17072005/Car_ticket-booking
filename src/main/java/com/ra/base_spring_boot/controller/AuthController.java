@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.ra.base_spring_boot.services.ticket.ITicketService;
+import com.ra.base_spring_boot.dto.auth.ForgotPasswordRequest;
+import com.ra.base_spring_boot.dto.auth.ResetPasswordRequest;
 
 import java.net.URI;
 
@@ -60,6 +62,30 @@ public class AuthController {
                 ResponseWrapper.<TicketResponse>builder()
                         .status(HttpStatus.OK)
                         .data(ticketService.lookupTicket(request))
+                        .build()
+        );
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ResponseWrapper<String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        String token = authService.forgotPassword(request.getEmail());
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .data("Password reset token: " + token)
+                        .build()
+        );
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ResponseWrapper<String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request.getToken(), request.getNewPassword());
+
+        return ResponseEntity.ok(
+                ResponseWrapper.<String>builder()
+                        .status(HttpStatus.OK)
+                        .data("Password reset successfully.")
                         .build()
         );
     }

@@ -13,5 +13,8 @@ public interface IAuthService
 
     JwtResponse login(FormLogin formLogin);
 
+    String forgotPassword(String email);
+
+    void resetPassword(String token, String newPassword);
 
 }

@@ -3,7 +3,6 @@ package com.ra.base_spring_boot.model.user;
 import com.ra.base_spring_boot.model.base.BaseObject;
 import jakarta.persistence.*;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
@@ -12,9 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "password_reset_tokens")
 @Getter
 @Setter
-@NoArgsConstructor
 public class PasswordResetToken extends BaseObject {
-    private static final int EXPIRATION = 10;
 
     @Column(nullable = false, unique = true)
     private String token;
@@ -25,16 +22,6 @@ public class PasswordResetToken extends BaseObject {
 
     @Column(nullable = false)
     private LocalDateTime expiryDate;
-
-    public PasswordResetToken(String token, User user) {
-        this.token = token;
-        this.user = user;
-        this.expiryDate = calculateExpiryDate();
-    }
-
-    private LocalDateTime calculateExpiryDate() {
-        return LocalDateTime.now().plusMinutes(EXPIRATION);
-    }
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.expiryDate);
