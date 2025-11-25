@@ -4,7 +4,6 @@ import com.ra.base_spring_boot.model.base.BaseObject;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,8 +19,12 @@ public class PasswordResetToken extends BaseObject {
     @JoinColumn(nullable = false, name = "user_id")
     private User user;
 
-    @Column(nullable = false)
+
+    @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiryDate;
+
+    @Column(name = "is_used", nullable = false)
+    private boolean isUsed = false;
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.expiryDate);
