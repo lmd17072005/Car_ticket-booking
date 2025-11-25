@@ -1,4 +1,7 @@
 package com.ra.base_spring_boot.security;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 import com.ra.base_spring_boot.security.exception.AccessDenied;
 import com.ra.base_spring_boot.security.exception.JwtEntryPoint;
@@ -25,7 +28,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import com.ra.base_spring_boot.model.constants.RoleName;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 
-import java.util.List;
+
 
 @Configuration
 @EnableWebSecurity
@@ -42,11 +45,11 @@ public class SecurityConfig
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception
     {
         return http
-                .cors(cf -> cf.configurationSource(request ->
-                {
+                .cors(cf -> cf.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
                     config.setAllowedOrigins(List.of(
                             "http://localhost:5173",
+                            "http://localhost:5174",   // thêm origin FE
                             "http://localhost:3000",
                             "https://875c0303e37b.ngrok-free.app",
                             "https://*.ngrok-free.app"
@@ -105,6 +108,7 @@ public class SecurityConfig
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder()
