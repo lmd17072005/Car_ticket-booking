@@ -1,12 +1,15 @@
 package com.ra.base_spring_boot.model.Bus;
 
 import com.ra.base_spring_boot.model.base.BaseObject;
+import com.ra.base_spring_boot.model.constants.BusStatus;
+import com.ra.base_spring_boot.model.constants.BusType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,6 +41,23 @@ public class Bus extends BaseObject {
     @JoinColumn(name = "company_id", nullable = false)
     private BusCompany company;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private BusStatus status = BusStatus.ACTIVE;
+
+    @Column(name = "current_kilometers")
+    private Integer currentKilometers;
+
+    @Column(name = "last_maintenance_date")
+    private LocalDate lastMaintenanceDate;
+
+    @Column(name = "next_maintenance_date")
+    private LocalDate nextMaintenanceDate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bus_type")
+    private BusType busType;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -59,5 +79,7 @@ public class Bus extends BaseObject {
 
     @OneToMany(mappedBy = "bus", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Seat> seats = new ArrayList<>();
+
+
 
 }

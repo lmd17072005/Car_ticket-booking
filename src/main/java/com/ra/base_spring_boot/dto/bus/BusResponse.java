@@ -3,6 +3,8 @@ package com.ra.base_spring_boot.dto.bus;
 import lombok.Getter;
 import lombok.Setter;
 import com.ra.base_spring_boot.model.Bus.Bus;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -15,6 +17,7 @@ public class BusResponse {
     private int capacity;
     private Long companyId;
     private String companyName;
+    private String busType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -27,6 +30,9 @@ public class BusResponse {
         if (bus.getCompany() != null) {
             this.companyId = bus.getCompany().getId();
             this.companyName = bus.getCompany().getCompanyName();
+        }
+        if (bus.getBusType() != null) {
+            this.busType = bus.getBusType().name();
         }
         this.createdAt = bus.getCreatedAt();
         this.updatedAt = bus.getUpdatedAt();
