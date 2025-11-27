@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,8 @@ public class AdminBusController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) BusStatus status,
             @RequestParam(required = false) BusType type,
-            @PageableDefault(page = 0, size = 10, sort = "id,desc") Pageable pageable) {
+            @PageableDefault(page = 0, size = 10, sort = "id", direction = Sort.Direction.DESC)
+            Pageable pageable) {
 
         Page<BusAdminResponse> busPage = busService.findAllAdmin(search, status, type ,pageable);
         return ResponseEntity.ok(
