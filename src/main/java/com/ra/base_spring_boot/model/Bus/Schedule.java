@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,9 +37,12 @@ public class Schedule extends BaseObject {
     @Column(name = "total_seats", nullable = false)
     private int totalSeats;
 
+    @Column(name = "price", nullable = false)
+    private BigDecimal price;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private ScheduleStatus status = ScheduleStatus.AVAILABLE;
+    private ScheduleStatus status = ScheduleStatus.UPCOMING;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

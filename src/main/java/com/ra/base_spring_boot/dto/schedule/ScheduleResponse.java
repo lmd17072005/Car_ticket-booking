@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.dto.schedule;
 
 import com.ra.base_spring_boot.dto.payment.CalculatedCancellationMilestone;
 import com.ra.base_spring_boot.model.Bus.Schedule;
+import com.ra.base_spring_boot.model.constants.ScheduleStatus;
 import lombok.Getter;
 import lombok.Setter;
 import java.math.BigDecimal;
@@ -39,7 +40,8 @@ public class ScheduleResponse {
         this.departureTime = schedule.getDepartureTime();
         this.arrivalTime = schedule.getArrivalTime();
         this.availableSeats = schedule.getAvailableSeats();
-        this.status = schedule.getStatus().name();
+        this.status = calculateCurrentStatus(schedule).name();
+        this.price = schedule.getPrice();
 
         if (this.departureTime != null && this.arrivalTime != null) {
             this.durationInMinutes = ChronoUnit.MINUTES.between(this.departureTime, this.arrivalTime);
@@ -56,7 +58,6 @@ public class ScheduleResponse {
         }
 
         if (schedule.getRoute() != null) {
-            this.price = schedule.getRoute().getPrice();
             if (schedule.getRoute().getDepartureStation() != null) {
                 this.departureStationName = schedule.getRoute().getDepartureStation().getName();
             }
@@ -64,5 +65,22 @@ public class ScheduleResponse {
                 this.arrivalStationName = schedule.getRoute().getArrivalStation().getName();
             }
         }
+    }
+
+    private ScheduleStatus calculateCurrentStatus(Schedule schedule) {
+        if (schedule.getStatus() == ScheduleStatus.CANCELLED) {
+            return ScheduleStatus.CANCELLED;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if (now.isAfter(schedule.getArrivalTime())) {
+            return ScheduleStatus.COMPLETED;
+        }
+
+        if (now.isAfter(schedule.getDepartureTime())) {
+            return ScheduleStatus.RUNNING;
+        }
+        return schedule.getStatus();
     }
 }

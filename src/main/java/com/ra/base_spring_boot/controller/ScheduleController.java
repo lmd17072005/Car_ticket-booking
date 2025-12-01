@@ -27,11 +27,6 @@ public class ScheduleController {
     private final IScheduleService scheduleService;
     private final ISeatService seatService;
 
-    @GetMapping
-    public ResponseEntity<ResponseWrapper<List<ScheduleResponse>>> getAllSchedules() {
-        return ResponseEntity.ok(ResponseWrapper.
-                <List<ScheduleResponse>>builder().status(HttpStatus.OK).data(scheduleService.findAll()).build());
-    }
 
     @GetMapping("/{id}")
     public ResponseEntity<ResponseWrapper<ScheduleResponse>> getScheduleById(@PathVariable Long id) {
@@ -61,39 +56,6 @@ public class ScheduleController {
                                 fromHour, toHour, maxPrice, companyIds,finalSeatTypes,
                                 pageable
                         ))
-                        .build()
-        );
-    }
-
-    @PostMapping
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ResponseWrapper<ScheduleResponse>> createSchedule(@Valid @RequestBody ScheduleRequest scheduleRequest) {
-        return new ResponseEntity<>(ResponseWrapper.
-                <ScheduleResponse>builder().status(HttpStatus.CREATED).data(scheduleService.save(scheduleRequest)).build(), HttpStatus.CREATED);
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ResponseWrapper<ScheduleResponse>> updateSchedule(
-            @PathVariable Long id,
-            @Valid @RequestBody ScheduleRequest scheduleRequest) {
-
-        return ResponseEntity.ok(
-                ResponseWrapper.<ScheduleResponse>builder()
-                        .status(HttpStatus.OK)
-                        .data(scheduleService.update(id, scheduleRequest))
-                        .build()
-        );
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ResponseEntity<ResponseWrapper<String>> cancelSchedule(@PathVariable Long id) {
-        scheduleService.cancelSchedule(id);
-        return ResponseEntity.ok(
-                ResponseWrapper.<String>builder()
-                        .status(HttpStatus.OK)
-                        .data("Hủy lịch trình thành công.")
                         .build()
         );
     }

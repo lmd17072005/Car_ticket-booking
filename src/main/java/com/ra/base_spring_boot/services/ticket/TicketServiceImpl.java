@@ -163,7 +163,7 @@ public class TicketServiceImpl implements ITicketService {
         Schedule schedule = ticket.getSchedule();
         schedule.setAvailableSeats(schedule.getAvailableSeats() + 1);
         if (schedule.getStatus() == ScheduleStatus.FULL) {
-            schedule.setStatus(ScheduleStatus.AVAILABLE);
+            schedule.setStatus(ScheduleStatus.UPCOMING);
         }
 
         CancellationPolicy cancellationLog = new CancellationPolicy();
