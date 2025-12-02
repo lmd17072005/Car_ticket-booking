@@ -6,6 +6,7 @@ import com.ra.base_spring_boot.dto.schedule.ScheduleResponse;
 import com.ra.base_spring_boot.exception.HttpBadRequest;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Bus.*;
+import com.ra.base_spring_boot.model.constants.BusStatus;
 import com.ra.base_spring_boot.model.constants.ScheduleStatus;
 import com.ra.base_spring_boot.model.constants.SeatType;
 import com.ra.base_spring_boot.model.payment.CancellationPolicy;
@@ -61,10 +62,14 @@ public class ScheduleServiceImpl implements IScheduleService {
     }
 
     @Override
-    @Transactional // Thêm @Transactional để đảm bảo tính nhất quán khi tạo Route mới
+    @Transactional
     public ScheduleResponse save(ScheduleRequest request) {
         Bus bus = busRepository.findById(request.getBusId())
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy xe với ID: " + request.getBusId()));
+
+        if (bus.getStatus() != BusStatus.ACTIVE) {
+            throw new HttpConflict("Không thể tạo lịch trình. Xe " + bus.getLicensePlate() + " đang ở trạng thái " + bus.getStatus() + ".");
+        }
 
         Station departureStation = stationRepository.findById(request.getDepartureStationId())
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy điểm đi với ID: " + request.getDepartureStationId()));
@@ -72,14 +77,11 @@ public class ScheduleServiceImpl implements IScheduleService {
         Station arrivalStation = stationRepository.findById(request.getArrivalStationId())
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy điểm đến với ID: " + request.getArrivalStationId()));
 
-        // Logic "Find or Create Route"
         Route route = routeRepository.findByDepartureStationAndArrivalStation(departureStation, arrivalStation)
                 .orElseGet(() -> {
                     Route newRoute = new Route();
                     newRoute.setDepartureStation(departureStation);
                     newRoute.setArrivalStation(arrivalStation);
-                    // Cần có giá trị mặc định cho duration nếu không Route sẽ không hợp lệ
-                    // Giả sử 180 phút (3 giờ) là mặc định. Bạn nên thay đổi cho phù hợp.
                     newRoute.setDuration(180);
                     return routeRepository.save(newRoute);
                 });
@@ -90,16 +92,13 @@ public class ScheduleServiceImpl implements IScheduleService {
         newSchedule.setDepartureTime(request.getDepartureTime());
         newSchedule.setPrice(request.getPrice());
 
-        // **SỬA ĐỔI QUAN TRỌNG 1:** Logic set trạng thái an toàn hơn
-        // Mặc định trạng thái khi tạo là UPCOMING. Admin không thể tạo chuyến xe ở trạng thái RUNNING hay COMPLETED.
+
         if (request.getStatus() != null && request.getStatus() == ScheduleStatus.CANCELLED) {
             newSchedule.setStatus(ScheduleStatus.CANCELLED);
         } else {
-            // Các trường hợp khác (gửi lên UPCOMING, FULL, hoặc null) đều mặc định là UPCOMING.
             newSchedule.setStatus(ScheduleStatus.UPCOMING);
         }
 
-        // **SỬA ĐỔI QUAN TRỌNG 2:** Đảm bảo Route có duration để tính toán
         if (route.getDuration() == null || route.getDuration() <= 0) {
             throw new HttpBadRequest("Tuyến đường chưa được cấu hình thời gian di chuyển (duration).");
         }
@@ -110,7 +109,7 @@ public class ScheduleServiceImpl implements IScheduleService {
         newSchedule.setAvailableSeats(bus.getCapacity());
 
         Schedule savedSchedule = scheduleRepository.save(newSchedule);
-        return mapToScheduleResponse(savedSchedule); // Dùng mapToScheduleResponse để nhất quán
+        return mapToScheduleResponse(savedSchedule);
     }
 
     @Override
@@ -119,20 +118,22 @@ public class ScheduleServiceImpl implements IScheduleService {
         Schedule existingSchedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy lịch trình với ID: " + id));
 
-        // Kiểm tra logic nghiệp vụ: chỉ cho phép sửa khi chuyến xe chưa chạy
         if (existingSchedule.getDepartureTime().isBefore(LocalDateTime.now()) &&
                 existingSchedule.getStatus() != ScheduleStatus.CANCELLED) {
             throw new HttpConflict("Không thể sửa lịch trình đã hoặc đang chạy.");
         }
 
-        // Giữ lại logic kiểm tra vé đã bán của bạn, nó rất tốt
         if (existingSchedule.getAvailableSeats() < existingSchedule.getTotalSeats()) {
             throw new HttpConflict("Không thể sửa lịch trình vì đã có vé được bán.");
         }
 
-        // ... logic tìm bus, station, và route của bạn đã rất tốt, giữ nguyên ...
         Bus bus = busRepository.findById(request.getBusId())
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy xe với ID: " + request.getBusId()));
+
+        if (bus.getStatus() != BusStatus.ACTIVE) {
+            throw new HttpConflict("Không thể cập nhật lịch trình. Xe " + bus.getLicensePlate() + " đang ở trạng thái " + bus.getStatus() + ".");
+        }
+
         Station departureStation = stationRepository.findById(request.getDepartureStationId())
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy điểm đi với ID: " + request.getDepartureStationId()));
         Station arrivalStation = stationRepository.findById(request.getArrivalStationId())
@@ -142,7 +143,7 @@ public class ScheduleServiceImpl implements IScheduleService {
                     Route newRoute = new Route();
                     newRoute.setDepartureStation(departureStation);
                     newRoute.setArrivalStation(arrivalStation);
-                    newRoute.setDuration(180); // Cần có duration mặc định
+                    newRoute.setDuration(180);
                     return routeRepository.save(newRoute);
                 });
 
@@ -151,13 +152,11 @@ public class ScheduleServiceImpl implements IScheduleService {
         existingSchedule.setDepartureTime(request.getDepartureTime());
         existingSchedule.setPrice(request.getPrice());
 
-        // **SỬA ĐỔI QUAN TRỌNG 3:** Logic cập nhật trạng thái
-        // Chỉ cho phép admin thay đổi giữa UPCOMING và CANCELLED.
+
         if (request.getStatus() != null) {
             if (request.getStatus() == ScheduleStatus.UPCOMING || request.getStatus() == ScheduleStatus.CANCELLED) {
                 existingSchedule.setStatus(request.getStatus());
             }
-            // Bỏ qua các trạng thái khác vì chúng được suy ra tự động.
         }
 
         if (route.getDuration() == null || route.getDuration() <= 0) {
@@ -165,7 +164,7 @@ public class ScheduleServiceImpl implements IScheduleService {
         }
         existingSchedule.setArrivalTime(request.getDepartureTime().plusMinutes(route.getDuration()));
         existingSchedule.setTotalSeats(bus.getCapacity());
-        existingSchedule.setAvailableSeats(bus.getCapacity()); // Reset lại số ghế trống khi thay đổi xe
+        existingSchedule.setAvailableSeats(bus.getCapacity());
 
         Schedule updatedSchedule = scheduleRepository.save(existingSchedule);
         return mapToScheduleResponse(updatedSchedule);
@@ -239,7 +238,8 @@ public class ScheduleServiceImpl implements IScheduleService {
     @Transactional(readOnly = true)
     public Page<ScheduleResponse> findAllForAdmin(LocalDate date, ScheduleStatus status, Long stationId, Pageable pageable) {
         Specification<Schedule> spec = Specification
-                .where(ScheduleSpecification.hasDepartureDate(date))
+                .where(ScheduleSpecification.isBusActive())
+                .and(ScheduleSpecification.hasDepartureDate(date))
                 .and(ScheduleSpecification.hasStatus(status))
                 .and(ScheduleSpecification.hasStation(stationId));
 

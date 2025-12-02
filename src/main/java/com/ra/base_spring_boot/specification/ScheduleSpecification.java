@@ -4,6 +4,7 @@ package com.ra.base_spring_boot.specification;
 
 import com.ra.base_spring_boot.model.Bus.Route;
 import com.ra.base_spring_boot.model.Bus.Schedule;
+import com.ra.base_spring_boot.model.constants.BusStatus;
 import com.ra.base_spring_boot.model.constants.ScheduleStatus;
 import com.ra.base_spring_boot.model.constants.SeatType;
 import jakarta.persistence.criteria.Join;
@@ -77,6 +78,12 @@ public class ScheduleSpecification {
             Predicate departureMatch = criteriaBuilder.equal(routeJoin.get("departureStation").get("id"), stationId);
             Predicate arrivalMatch = criteriaBuilder.equal(routeJoin.get("arrivalStation").get("id"), stationId);
             return criteriaBuilder.or(departureMatch, arrivalMatch);
+        };
+    }
+
+    public static Specification<Schedule> isBusActive() {
+        return (root, query, cb) -> {
+            return cb.equal(root.join("bus").get("status"), BusStatus.ACTIVE);
         };
     }
 

@@ -164,18 +164,15 @@ public class PaymentServiceImpl implements IPaymentService {
                 // Payment successful
                 payment.setStatus(PaymentStatus.COMPLETED);
 
-                // Store additional VNPay transaction details
                 Map<String, Object> transactionDetails = new HashMap<>();
                 transactionDetails.put("vnp_TransactionNo", vnp_TransactionNo);
                 transactionDetails.put("vnp_BankCode", vnp_BankCode);
                 transactionDetails.put("vnp_PayDate", vnp_PayDate);
                 transactionDetails.put("vnp_Amount", vnp_Amount);
-                // You can store this in a JSON field or separate table
 
                 log.info("VNPay IPN: Payment COMPLETED. ID: {}, TransactionNo: {}",
                         payment.getId(), vnp_TransactionNo);
 
-                // Call booking service to finalize ticket creation
                 try {
                     bookingServiceClient.finalizeTicketCreation(payment.getId());
                     log.info("Successfully called booking service for Payment ID: {}", payment.getId());
@@ -215,11 +212,9 @@ public class PaymentServiceImpl implements IPaymentService {
             throw new HttpBadRequest("Invalid payment signature");
         }
 
-        // Extract parameters
         String vnp_TxnRef = vnpayParams.get("vnp_TxnRef");
         String vnp_ResponseCode = vnpayParams.get("vnp_ResponseCode");
 
-        // Find payment
         Payment payment = paymentRepository.findByTransactionCode(vnp_TxnRef)
                 .orElseThrow(() -> new HttpNotFound("Payment not found for transaction: " + vnp_TxnRef));
 

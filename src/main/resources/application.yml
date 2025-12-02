@@ -9,7 +9,7 @@ spring:
       enabled: true
 
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/TicketBooking?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://127.0.0.1:3306/TicketBooking?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Asia/Ho_Chi_Minh
     username: root
     password: Duc17072005@
   jpa:
@@ -25,7 +25,8 @@ spring:
 
 logging:
   level:
-    org.hibernate.type.descriptor.sql: trace
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
 
 jwt:
   secret:

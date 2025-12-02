@@ -2,6 +2,7 @@ package com.ra.base_spring_boot.services.bus;
 
 import com.ra.base_spring_boot.dto.maintenance.MaintenanceRequest;
 import com.ra.base_spring_boot.dto.maintenance.MaintenanceResponse;
+import com.ra.base_spring_boot.exception.HttpConflict;
 import com.ra.base_spring_boot.exception.HttpNotFound;
 import com.ra.base_spring_boot.model.Bus.Bus;
 import com.ra.base_spring_boot.model.Bus.BusMaintenance;
@@ -71,8 +72,14 @@ public class MaintenanceServiceImpl implements IMaintenanceService {
         BusMaintenance existingMaintenance = maintenanceRepository.findById(id)
                 .orElseThrow(() -> new HttpNotFound("Không tìm thấy lịch bảo trì với ID: " + id));
 
-        Bus bus = busRepository.findById(request.getBusId())
-                .orElseThrow(() -> new HttpNotFound("Không tìm thấy xe bus với ID: " + request.getBusId()));
+        // Lấy chiếc xe từ lịch bảo trì hiện có, không cho phép thay đổi xe
+        Bus bus = existingMaintenance.getBus();
+
+        // Kiểm tra để đảm bảo an toàn, nếu request gửi lên busId khác thì báo lỗi
+        if (!request.getBusId().equals(bus.getId())) {
+            throw new HttpConflict("Không được phép thay đổi xe của một lịch bảo trì đã có.");
+        }
+
 
         mapRequestToEntity(existingMaintenance, request, bus);
 

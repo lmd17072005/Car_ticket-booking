@@ -37,7 +37,13 @@ public class AdminScheduleController {
             @RequestParam(defaultValue = "departureTime") String sortBy,
             @RequestParam(defaultValue = "ASC") String sortDir
     ) {
-        LocalDate filterDate = (date == null) ? LocalDate.now() : date;
+        LocalDate filterDate = date;
+
+        if (status == ScheduleStatus.RUNNING || status == ScheduleStatus.COMPLETED) {
+            filterDate = null;
+        } else if (date == null) {
+            filterDate = LocalDate.now();
+        }
 
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
